@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⚽ 世界杯竞彩分析报告 | {{date}}</title>
+<style>
+  :root {
+    --bg: #0a0c10;
+    --card: #12151e;
+    --card-inner: #181c28;
+    --card-hover: #1e2336;
+    --border: #252a3e;
+    --border-light: #2f3550;
+    --text: #e8e9ed;
+    --text-dim: #6b7194;
+    --accent: #e8a820;
+    --accent-glow: rgba(232,168,32,0.25);
+    --accent-dim: rgba(232,168,32,0.08);
+    --green: #2dd4a0;
+    --green-dim: rgba(45,212,160,0.10);
+    --red: #f0544f;
+    --red-dim: rgba(240,84,79,0.10);
+    --blue: #4f8ff7;
+    --blue-dim: rgba(79,143,247,0.10);
+    --purple: #b06ef5;
+    --purple-dim: rgba(176,110,245,0.10);
+    --cyan: #22d3ee;
+    --cyan-dim: rgba(34,211,238,0.08);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    padding: 20px 16px;
+    max-width: 820px;
+    margin: 0 auto;
+  }
+
+  /* ─── Header ─── */
+  .header {
+    text-align: center;
+    padding: 40px 24px 32px;
+    background: linear-gradient(160deg, #12151e 0%, #1a1f35 50%, #12151e 100%);
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '';
+    position: absolute;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: radial-gradient(ellipse at 30% 20%, rgba(232,168,32,0.06) 0%, transparent 50%);
+    pointer-events: none;
+  }
+  .header .logo { font-size: 32px; margin-bottom: 8px; }
+  .header h1 { font-size: 20px; font-weight: 700; margin-bottom: 12px; letter-spacing: 0.5px; }
+  .header h1 span { color: var(--accent); }
+  .header .meta { color: var(--text-dim); font-size: 13px; letter-spacing: 1px; }
+  .header .meta span { margin: 0 10px; }
+  .header .divider {
+    width: 60px; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    margin: 14px auto 0;
+  }
+
+  /* ─── Section Title ─── */
+  .section-title {
+    font-size: 14px;
+    font-weight: 700;
+    padding: 10px 18px;
+    margin: 28px 0 14px;
+    background: var(--accent-dim);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+    color: var(--accent);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  /* ─── Match Table ─── */
+  .match-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--card);
+    border-radius: 14px;
+    overflow: hidden;
+    font-size: 13px;
+    border: 1px solid var(--border);
+  }
+  .match-table th {
+    background: var(--card-inner);
+    padding: 12px;
+    text-align: center;
+    color: var(--text-dim);
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+  .match-table td {
+    padding: 12px;
+    text-align: center;
+    border-top: 1px solid var(--border);
+  }
+  .match-table tr:hover td { background: var(--card-hover); }
+  .team-name { font-weight: 700; }
+  .vs { color: var(--text-dim); font-size: 11px; margin: 0 4px; }
+  .handicap {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  .handicap.positive { background: var(--green-dim); color: var(--green); border: 1px solid rgba(45,212,160,0.2); }
+  .handicap.negative { background: var(--red-dim); color: var(--red); border: 1px solid rgba(240,84,79,0.2); }
+  .sp-value { font-family: "SF Mono", "JetBrains Mono", "Fira Code", monospace; font-size: 12px; color: var(--text-dim); }
+
+  /* ─── Match Card ─── */
+  .match-card {
+    background: var(--card);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+  .match-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, var(--card-inner), var(--card));
+    border-bottom: 1px solid var(--border);
+  }
+  .match-card-header .match-label {
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 0.3px;
+  }
+  .match-card-header .match-tag {
+    font-size: 11px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  .tag-crush { background: var(--red-dim); color: var(--red); border: 1px solid rgba(240,84,79,0.25); }
+  .tag-suppress { background: rgba(249,115,22,0.10); color: #f97316; border: 1px solid rgba(249,115,22,0.25); }
+  .tag-advantage { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(232,168,32,0.25); }
+  .tag-close { background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(79,143,247,0.25); }
+  .tag-even { background: var(--purple-dim); color: var(--purple); border: 1px solid rgba(176,110,245,0.25); }
+
+  .match-card-body { padding: 20px; }
+
+  /* ─── Dim Row ─── */
+  .dim-row {
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(37,42,62,0.5);
+  }
+  .dim-row:last-child { border-bottom: none; }
+
+  .dim-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+  .dim-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-dim);
+    letter-spacing: 0.5px;
+  }
+  .dim-label .weight { font-size: 10px; color: var(--accent); margin-left: 6px; font-weight: 600; }
+  .dim-score {
+    font-weight: 800;
+    font-size: 14px;
+    padding: 2px 10px;
+    border-radius: 6px;
+  }
+  .score-high { color: var(--green); background: var(--green-dim); }
+  .score-mid { color: var(--accent); background: var(--accent-dim); }
+  .score-low { color: var(--red); background: var(--red-dim); }
+  .dim-content {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.8;
+  }
+
+  /* ─── 盘口密码 Special Style ─── */
+  .dim-row.is-handicap {
+    background: linear-gradient(135deg, var(--cyan-dim), var(--accent-dim));
+    margin: 4px -12px;
+    padding: 14px 16px;
+    border-radius: 10px;
+    border-bottom: none;
+  }
+  .dim-row.is-handicap .dim-label {
+    color: var(--cyan);
+    font-size: 14px;
+  }
+  .dim-row.is-handicap .dim-content {
+    color: var(--text);
+  }
+  /* 盘口子块 */
+  .hc-block {
+    margin: 6px 0;
+    padding: 8px 12px;
+    background: rgba(10,12,16,0.5);
+    border-radius: 8px;
+    border-left: 3px solid var(--cyan);
+    font-size: 12px;
+    line-height: 1.9;
+  }
+  .hc-block-title {
+    font-weight: 700;
+    color: var(--cyan);
+    font-size: 11px;
+    letter-spacing: 1px;
+    margin-bottom: 3px;
+    text-transform: uppercase;
+  }
+  .hc-block .signal-up { color: var(--green); font-weight: 700; }
+  .hc-block .signal-down { color: var(--red); font-weight: 700; }
+  .hc-block .signal-warn { color: var(--accent); font-weight: 700; }
+  .hc-block .signal-mute { color: var(--text-dim); }
+
+  /* ─── Footer ─── */
+  .match-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 20px;
+    background: linear-gradient(135deg, #0e1018, #141825);
+    border-top: 1px solid var(--border);
+  }
+  .recommendation {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .rec-direction {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--accent);
+    letter-spacing: 1px;
+  }
+  .rec-sp {
+    font-size: 12px;
+    padding: 3px 10px;
+    background: var(--accent-dim);
+    border: 1px solid rgba(232,168,32,0.2);
+    border-radius: 6px;
+    color: var(--accent);
+    font-weight: 700;
+    font-family: "SF Mono", "JetBrains Mono", monospace;
+  }
+  .total-score {
+    font-size: 22px;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+  }
+  .total-score .score-num { color: var(--accent); }
+  .total-score .score-max { color: var(--text-dim); font-size: 13px; font-weight: 400; }
+  .risk-note {
+    font-size: 12px;
+    color: var(--red);
+    margin-top: 6px;
+    padding-left: 2px;
+  }
+
+  /* ─── Parlay Cards ─── */
+  .parlay-card {
+    background: var(--card);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    padding: 24px;
+    margin-bottom: 16px;
+  }
+  .parlay-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .parlay-title { font-size: 16px; font-weight: 800; letter-spacing: 0.5px; }
+  .parlay-sp {
+    font-size: 24px;
+    font-weight: 900;
+    color: var(--accent);
+    font-family: "SF Mono", "JetBrains Mono", monospace;
+  }
+  .parlay-sp small { font-size: 11px; color: var(--text-dim); font-weight: 400; letter-spacing: 0; }
+  .parlay-items { margin-bottom: 14px; }
+  .parlay-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    border-radius: 10px;
+    margin-bottom: 5px;
+    font-size: 13px;
+  }
+  .parlay-item .item-match { font-weight: 500; }
+  .parlay-item .item-dir { font-weight: 800; color: var(--accent); }
+  .parlay-item .item-sp { color: var(--text-dim); font-size: 12px; font-family: "SF Mono", "JetBrains Mono", monospace; }
+  .parlay-logic {
+    font-size: 13px;
+    color: var(--text-dim);
+    padding: 12px 14px;
+    background: var(--card-inner);
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    line-height: 1.8;
+  }
+  .confidence { margin-top: 10px; }
+  .confidence .stars { color: var(--accent); letter-spacing: 3px; font-size: 14px; }
+
+  .parlay-safe .parlay-item { background: var(--green-dim); border: 1px solid rgba(45,212,160,0.1); }
+  .parlay-safe .parlay-title { color: var(--green); }
+  .parlay-value .parlay-item { background: var(--accent-dim); border: 1px solid rgba(232,168,32,0.1); }
+  .parlay-value .parlay-title { color: var(--accent); }
+  .parlay-dark .parlay-item { background: var(--purple-dim); border: 1px solid rgba(176,110,245,0.1); }
+  .parlay-dark .parlay-title { color: var(--purple); }
+
+  .footer {
+    text-align: center;
+    padding: 28px 16px;
+    color: var(--text-dim);
+    font-size: 11px;
+    letter-spacing: 0.5px;
+  }
+  .footer .sources { margin-bottom: 4px; }
+  .footer .disclaimer { color: var(--red); font-weight: 600; }
+
+  @media (max-width: 600px) {
+    body { padding: 8px; }
+    .match-card-header { flex-direction: column; gap: 8px; }
+    .dim-row { flex-direction: column; gap: 4px; }
+    .dim-label { width: auto; }
+    .dim-score { text-align: left; width: auto; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">⚽</div>
+  <h1>世界杯竞彩【<span>{{play_type}}</span>】{{parlay_num}}串1</h1>
+  <div class="meta">
+    <span>{{date}}</span>
+    <span>·</span>
+    <span>{{play_type}}</span>
+    <span>·</span>
+    <span>{{match_count}}场</span>
+  </div>
+  <div class="divider"></div>
+</div>
+
+<div class="section-title">📊 赛事一览</div>
+<table class="match-table">
+  <thead>
+    <tr>
+      <th>编号</th>
+      <th>时间</th>
+      <th>对阵</th>
+      <th>{{handicap_header}}</th>
+      <th>SP（胜/平/负）</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{match_table_rows}}
+  </tbody>
+</table>
+
+<div class="section-title">🔍 POWER-6 六维分析</div>
+
+{{match_cards}}
+
+<div class="section-title">🎯 {{parlay_num}}串1方案</div>
+
+{{parlay_cards}}
+
+<div class="footer">
+  <div class="sources">📊 500.com竞彩 | 懂球帝API | 欧赔/亚盘分析页</div>
+  <div class="sources">📋 POWER-6六维模型 · 凯利指数 · 隐含概率</div>
+  <div class="disclaimer">⚠️ 以上分析仅供参考，不构成投注建议</div>
+</div>
+
+</body>
+</html>

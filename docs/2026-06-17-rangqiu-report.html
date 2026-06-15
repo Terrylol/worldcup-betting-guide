@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⚽ 世界杯竞彩分析报告 | 2026-06-17</title>
+<style>
+  :root {
+    --bg: #0a0c10;
+    --card: #12151e;
+    --card-inner: #181c28;
+    --card-hover: #1e2336;
+    --border: #252a3e;
+    --border-light: #2f3550;
+    --text: #e8e9ed;
+    --text-dim: #6b7194;
+    --accent: #e8a820;
+    --accent-glow: rgba(232,168,32,0.25);
+    --accent-dim: rgba(232,168,32,0.08);
+    --green: #2dd4a0;
+    --green-dim: rgba(45,212,160,0.10);
+    --red: #f0544f;
+    --red-dim: rgba(240,84,79,0.10);
+    --blue: #4f8ff7;
+    --blue-dim: rgba(79,143,247,0.10);
+    --purple: #b06ef5;
+    --purple-dim: rgba(176,110,245,0.10);
+    --cyan: #22d3ee;
+    --cyan-dim: rgba(34,211,238,0.08);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    padding: 20px 16px;
+    max-width: 820px;
+    margin: 0 auto;
+  }
+
+  /* ─── Header ─── */
+  .header {
+    text-align: center;
+    padding: 40px 24px 32px;
+    background: linear-gradient(160deg, #12151e 0%, #1a1f35 50%, #12151e 100%);
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '';
+    position: absolute;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: radial-gradient(ellipse at 30% 20%, rgba(232,168,32,0.06) 0%, transparent 50%);
+    pointer-events: none;
+  }
+  .header .logo { font-size: 32px; margin-bottom: 8px; }
+  .header h1 { font-size: 20px; font-weight: 700; margin-bottom: 12px; letter-spacing: 0.5px; }
+  .header h1 span { color: var(--accent); }
+  .header .meta { color: var(--text-dim); font-size: 13px; letter-spacing: 1px; }
+  .header .meta span { margin: 0 10px; }
+  .header .divider {
+    width: 60px; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    margin: 14px auto 0;
+  }
+
+  /* ─── Section Title ─── */
+  .section-title {
+    font-size: 14px;
+    font-weight: 700;
+    padding: 10px 18px;
+    margin: 28px 0 14px;
+    background: var(--accent-dim);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+    color: var(--accent);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  /* ─── Match Table ─── */
+  .match-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--card);
+    border-radius: 14px;
+    overflow: hidden;
+    font-size: 13px;
+    border: 1px solid var(--border);
+  }
+  .match-table th {
+    background: var(--card-inner);
+    padding: 12px;
+    text-align: center;
+    color: var(--text-dim);
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+  .match-table td {
+    padding: 12px;
+    text-align: center;
+    border-top: 1px solid var(--border);
+  }
+  .match-table tr:hover td { background: var(--card-hover); }
+  .team-name { font-weight: 700; }
+  .vs { color: var(--text-dim); font-size: 11px; margin: 0 4px; }
+  .handicap {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  .handicap.positive { background: var(--green-dim); color: var(--green); border: 1px solid rgba(45,212,160,0.2); }
+  .handicap.negative { background: var(--red-dim); color: var(--red); border: 1px solid rgba(240,84,79,0.2); }
+  .sp-value { font-family: "SF Mono", "JetBrains Mono", "Fira Code", monospace; font-size: 12px; color: var(--text-dim); }
+
+  /* ─── Match Card ─── */
+  .match-card {
+    background: var(--card);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+  .match-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, var(--card-inner), var(--card));
+    border-bottom: 1px solid var(--border);
+  }
+  .match-card-header .match-label {
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 0.3px;
+  }
+  .match-card-header .match-tag {
+    font-size: 11px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  .tag-crush { background: var(--red-dim); color: var(--red); border: 1px solid rgba(240,84,79,0.25); }
+  .tag-suppress { background: rgba(249,115,22,0.10); color: #f97316; border: 1px solid rgba(249,115,22,0.25); }
+  .tag-advantage { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(232,168,32,0.25); }
+  .tag-close { background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(79,143,247,0.25); }
+  .tag-even { background: var(--purple-dim); color: var(--purple); border: 1px solid rgba(176,110,245,0.25); }
+
+  .match-card-body { padding: 20px; }
+
+  /* ─── Dim Row ─── */
+  .dim-row {
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(37,42,62,0.5);
+  }
+  .dim-row:last-child { border-bottom: none; }
+
+  .dim-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+  .dim-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-dim);
+    letter-spacing: 0.5px;
+  }
+  .dim-label .weight { font-size: 10px; color: var(--accent); margin-left: 6px; font-weight: 600; }
+  .dim-score {
+    font-weight: 800;
+    font-size: 14px;
+    padding: 2px 10px;
+    border-radius: 6px;
+  }
+  .score-high { color: var(--green); background: var(--green-dim); }
+  .score-mid { color: var(--accent); background: var(--accent-dim); }
+  .score-low { color: var(--red); background: var(--red-dim); }
+  .dim-content {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.8;
+  }
+
+  /* ─── 盘口密码 Special Style ─── */
+  .dim-row.is-handicap {
+    background: linear-gradient(135deg, var(--cyan-dim), var(--accent-dim));
+    margin: 4px -12px;
+    padding: 14px 16px;
+    border-radius: 10px;
+    border-bottom: none;
+  }
+  .dim-row.is-handicap .dim-label {
+    color: var(--cyan);
+    font-size: 14px;
+  }
+  .dim-row.is-handicap .dim-content {
+    color: var(--text);
+  }
+  /* 盘口子块 */
+  .hc-block {
+    margin: 6px 0;
+    padding: 8px 12px;
+    background: rgba(10,12,16,0.5);
+    border-radius: 8px;
+    border-left: 3px solid var(--cyan);
+    font-size: 12px;
+    line-height: 1.9;
+  }
+  .hc-block-title {
+    font-weight: 700;
+    color: var(--cyan);
+    font-size: 11px;
+    letter-spacing: 1px;
+    margin-bottom: 3px;
+    text-transform: uppercase;
+  }
+  .hc-block .signal-up { color: var(--green); font-weight: 700; }
+  .hc-block .signal-down { color: var(--red); font-weight: 700; }
+  .hc-block .signal-warn { color: var(--accent); font-weight: 700; }
+  .hc-block .signal-mute { color: var(--text-dim); }
+
+  /* ─── Footer ─── */
+  .match-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 20px;
+    background: linear-gradient(135deg, #0e1018, #141825);
+    border-top: 1px solid var(--border);
+  }
+  .recommendation {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .rec-direction {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--accent);
+    letter-spacing: 1px;
+  }
+  .rec-sp {
+    font-size: 12px;
+    padding: 3px 10px;
+    background: var(--accent-dim);
+    border: 1px solid rgba(232,168,32,0.2);
+    border-radius: 6px;
+    color: var(--accent);
+    font-weight: 700;
+    font-family: "SF Mono", "JetBrains Mono", monospace;
+  }
+  .total-score {
+    font-size: 22px;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+  }
+  .total-score .score-num { color: var(--accent); }
+  .total-score .score-max { color: var(--text-dim); font-size: 13px; font-weight: 400; }
+  .risk-note {
+    font-size: 12px;
+    color: var(--red);
+    margin-top: 6px;
+    padding-left: 2px;
+  }
+
+  /* ─── Parlay Cards ─── */
+  .parlay-card {
+    background: var(--card);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    padding: 24px;
+    margin-bottom: 16px;
+  }
+  .parlay-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .parlay-title { font-size: 16px; font-weight: 800; letter-spacing: 0.5px; }
+  .parlay-sp {
+    font-size: 24px;
+    font-weight: 900;
+    color: var(--accent);
+    font-family: "SF Mono", "JetBrains Mono", monospace;
+  }
+  .parlay-sp small { font-size: 11px; color: var(--text-dim); font-weight: 400; letter-spacing: 0; }
+  .parlay-items { margin-bottom: 14px; }
+  .parlay-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    border-radius: 10px;
+    margin-bottom: 5px;
+    font-size: 13px;
+  }
+  .parlay-item .item-match { font-weight: 500; }
+  .parlay-item .item-dir { font-weight: 800; color: var(--accent); }
+  .parlay-item .item-sp { color: var(--text-dim); font-size: 12px; font-family: "SF Mono", "JetBrains Mono", monospace; }
+  .parlay-logic {
+    font-size: 13px;
+    color: var(--text-dim);
+    padding: 12px 14px;
+    background: var(--card-inner);
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    line-height: 1.8;
+  }
+  .confidence { margin-top: 10px; }
+  .confidence .stars { color: var(--accent); letter-spacing: 3px; font-size: 14px; }
+
+  .parlay-safe .parlay-item { background: var(--green-dim); border: 1px solid rgba(45,212,160,0.1); }
+  .parlay-safe .parlay-title { color: var(--green); }
+  .parlay-value .parlay-item { background: var(--accent-dim); border: 1px solid rgba(232,168,32,0.1); }
+  .parlay-value .parlay-title { color: var(--accent); }
+  .parlay-dark .parlay-item { background: var(--purple-dim); border: 1px solid rgba(176,110,245,0.1); }
+  .parlay-dark .parlay-title { color: var(--purple); }
+
+  .footer {
+    text-align: center;
+    padding: 28px 16px;
+    color: var(--text-dim);
+    font-size: 11px;
+    letter-spacing: 0.5px;
+  }
+  .footer .sources { margin-bottom: 4px; }
+  .footer .disclaimer { color: var(--red); font-weight: 600; }
+
+  @media (max-width: 600px) {
+    body { padding: 8px; }
+    .match-card-header { flex-direction: column; gap: 8px; }
+    .dim-row { flex-direction: column; gap: 4px; }
+    .dim-label { width: auto; }
+    .dim-score { text-align: left; width: auto; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">⚽</div>
+  <h1>世界杯竞彩【<span>让球胜平负</span>】4串1</h1>
+  <div class="meta">
+    <span>2026-06-17</span>
+    <span>·</span>
+    <span>让球胜平负</span>
+    <span>·</span>
+    <span>4场</span>
+  </div>
+  <div class="divider"></div>
+</div>
+
+<div class="section-title">📊 赛事一览</div>
+<table class="match-table">
+  <thead>
+    <tr>
+      <th>编号</th>
+      <th>时间</th>
+      <th>对阵</th>
+      <th>让球</th>
+      <th>SP（胜/平/负）</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+  <td>周二017</td>
+  <td>03:00</td>
+  <td><span class="team-name">法国</span> <span class="vs">vs</span> <span class="team-name">塞内加尔</span></td>
+  <td><span class="handicap negative">主让1球</span></td>
+  <td><span class="sp-value">2.12 / 3.37 / 2.77</span></td>
+</tr>
+<tr>
+  <td>周二018</td>
+  <td>06:00</td>
+  <td><span class="team-name">伊拉克</span> <span class="vs">vs</span> <span class="team-name">挪威</span></td>
+  <td><span class="handicap positive">客让2球</span></td>
+  <td><span class="sp-value">2.21 / 3.89 / 2.38</span></td>
+</tr>
+<tr>
+  <td>周二019</td>
+  <td>09:00</td>
+  <td><span class="team-name">阿根廷</span> <span class="vs">vs</span> <span class="team-name">阿尔及利亚</span></td>
+  <td><span class="handicap negative">主让1球</span></td>
+  <td><span class="sp-value">1.90 / 3.50 / 3.15</span></td>
+</tr>
+<tr>
+  <td>周二020</td>
+  <td>12:00</td>
+  <td><span class="team-name">奥地利</span> <span class="vs">vs</span> <span class="team-name">约旦</span></td>
+  <td><span class="handicap negative">主让1球</span></td>
+  <td><span class="sp-value">1.79 / 3.56 / 3.45</span></td>
+</tr>
+  </tbody>
+</table>
+
+<div class="section-title">🔍 POWER-6 六维分析</div>
+
+<div class="match-card">
+  <div class="match-card-header">
+    <span class="match-label">周二017 法国 vs 塞内加尔</span>
+    <span class="match-tag tag-advantage">优势局</span>
+  </div>
+  <div class="match-card-body">
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">战力鸿沟<span class="weight">×15%</span></span>
+    <span class="dim-score score-mid">7/10</span>
+  </div>
+  <div class="dim-content">FIFA排名3 vs 15，差12位B级优势；身价15.2亿 vs 4.7亿（懂球帝API）</div>
+</div>
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">状态引擎<span class="weight">×15%</span></span>
+    <span class="dim-score score-mid">7/10</span>
+  </div>
+  <div class="dim-content">法国近10场8胜1平1负（胜率80%赢盘率40%），走势WLWWWW⚡上升态；塞内加尔6胜2平2负（胜率60%），走势DLWWDW🔄波动态；法国赢盘率40%与胜率80%严重背离（500.com）</div>
+</div>
+<div class="dim-row is-handicap">
+  <div class="dim-header">
+    <span class="dim-label">盘口密码<span class="weight">×35%</span></span>
+    <span class="dim-score score-mid">6/10</span>
+  </div>
+  <div class="dim-content"></div>
+  <div class="hc-block"><div class="hc-block-title">凯利</div>竞彩即凯利 胜0.90/平0.84/负0.90（返还率88.56%）<span class="signal-warn">→</span> 平项0.84全场最低，机构压注平局方向；澳门负项凯利0.76极低=防范塞内加尔偷分</div>
+<div class="hc-block"><div class="hc-block-title">概率</div>竞彩即概率 胜64.17%/平22.71%/负13.12%，初盘<span class="signal-warn">→</span>即时胜率↓3.41%平率↑1.78%=机构持续防平</div>
+<div class="hc-block"><div class="hc-block-title">亚盘</div>初盘一球/球半（0.78/1.06）<span class="signal-warn">→</span>即时一球（0.85/0.95），<span class="signal-down">⚠️</span>降盘+上盘水位0.78<span class="signal-warn">→</span>0.85上浮=降盘不降水，典型诱上信号</div>
+<div class="hc-block"><div class="hc-block-title">返还率</div>竞彩88.56% vs 立博95.20%，竞彩返还率偏低7%=控制主胜赔付利润</div>
+</div>
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">交锋心结<span class="weight">×10%</span></span>
+    <span class="dim-score score-low">4/10</span>
+  </div>
+  <div class="dim-content">双方近1次交战，法国0胜0平1负（2002世界杯0:1不敌塞内加尔），苦主效应（500.com数据页）</div>
+</div>
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">阵容博弈<span class="weight">×15%</span></span>
+    <span class="dim-score score-mid">7/10</span>
+  </div>
+  <div class="dim-content">法国⭐⭐⭐⭐⭐（15.2亿欧五大联赛满编）vs 塞内加尔⭐⭐⭐（4.7亿欧法甲系8人+）；塞内加尔法甲系球员对法国战术风格极熟悉，是双刃剑（懂球帝API）</div>
+</div>
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">赛程暗线<span class="weight">×10%</span></span>
+    <span class="dim-score score-mid">6/10</span>
+  </div>
+  <div class="dim-content">I组首轮体能充沛；凌晨3点开赛对欧洲球员友好；2002惨败历史包袱可能让法国首战谨慎（500.com心水）</div>
+</div>
+  </div>
+  <div class="match-card-footer">
+    <div>
+      <div class="recommendation">
+        <span class="rec-direction">让球平</span>
+        <span class="rec-sp">SP 3.37</span>
+      </div>
+      <div class="risk-note">⚠️ 竞彩平凯利0.84最低+亚盘降盘+赢盘率40%，让1球走盘概率最高</div>
+    </div>
+    <div class="total-score">
+      <span class="score-num">62</span><span class="score-max">/100</span>
+    </div>
+  </div>
+</div>
+
+<div class="match-card">
+  <div class="match-card-header">
+    <span class="match-label">周二018 伊拉克 vs 挪威</span>
+    <span class="match-tag tag-suppress">压制局</span>
+  </div>
+  <div class="match-card-body">
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">战力鸿沟<span class="weight">×15%</span></span>
+    <span class="dim-score score-high">9/10</span>
+  </div>
+  <div class="dim-content">FIFA排名56 vs 31，差25位A级压制；身价2120万 vs 5.8亿，270倍差距；哈兰德+厄德高双核（懂球帝API）</div>
+</div>
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">状态引擎<span class="weight">×15%</span></span>
+    <span class="dim-score score-high">8/10</span>
+  </div>
+  <div class="dim-content">伊拉克5胜2平3负🔄波动态（胜率50%赢盘率60%），走势LDWWLL📉下滑态；挪威6胜3平1负⚡上升态（胜率60%进31球），走势DWDLWW（500.com）</div>
+</div>
+<div class="dim-row is-handicap">
+  <div class="dim-header">
+    <span class="dim-label">盘口密码<span class="weight">×35%</span></span>
+    <span class="dim-score score-high">8/10</span>
+  </div>
+  <div class="dim-content"></div>
+  <div class="hc-block"><div class="hc-block-title">凯利</div>澳门即凯利 胜0.64/平0.73/负0.97（返还率90.03%）<span class="signal-warn">→</span> 胜项0.64极低=机构极度看伊拉克惨败方向；威廉希尔负凯利1.03>返还率=负项承担风险=负方向打出概率高</div>
+<div class="hc-block"><div class="hc-block-title">概率</div>澳门即概率 胜9.38%/平16.83%/负73.79%，威廉希尔负概率69.06%<span class="signal-warn">→</span>客胜概率7成+</div>
+<div class="hc-block"><div class="hc-block-title">亚盘</div>初盘受球半/两球<span class="signal-warn">→</span>即时受两球（升盘！）<span class="signal-up">✅</span>升盘不升水=机构真看好挪威大胜2球+</div>
+<div class="hc-block"><div class="hc-block-title">返还率</div>澳门90.03% vs 威廉希尔89.09%，返还率稳定无分歧</div>
+</div>
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">交锋心结<span class="weight">×10%</span></span>
+    <span class="dim-score score-high">8/10</span>
+  </div>
+  <div class="dim-content">无历史交锋；澳门推介挪威「球队竞争力十足」（500.com心水）</div>
+</div>
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">阵容博弈<span class="weight">×15%</span></span>
+    <span class="dim-score score-high">9/10</span>
+  </div>
+  <div class="dim-content">伊拉克⭐（2120万欧无五大联赛球员）vs 挪威⭐⭐⭐⭐（5.8亿欧哈兰德+厄德高+多名英超球员）（懂球帝API）</div>
+</div>
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">赛程暗线<span class="weight">×10%</span></span>
+    <span class="dim-score score-mid">7/10</span>
+  </div>
+  <div class="dim-content">I组首轮体能充沛（500.com赛事页）</div>
+</div>
+  </div>
+  <div class="match-card-footer">
+    <div>
+      <div class="recommendation">
+        <span class="rec-direction">让球负</span>
+        <span class="rec-sp">SP 2.38</span>
+      </div>
+      
+    </div>
+    <div class="total-score">
+      <span class="score-num">82</span><span class="score-max">/100</span>
+    </div>
+  </div>
+</div>
+
+<div class="match-card">
+  <div class="match-card-header">
+    <span class="match-label">周二019 阿根廷 vs 阿尔及利亚</span>
+    <span class="match-tag tag-suppress">压制局</span>
+  </div>
+  <div class="match-card-body">
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">战力鸿沟<span class="weight">×15%</span></span>
+    <span class="dim-score score-high">9/10</span>
+  </div>
+  <div class="dim-content">FIFA排名1 vs 28，差27位A级压制；卫冕冠军+8亿身价 vs 2.5亿（懂球帝API）</div>
+</div>
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">状态引擎<span class="weight">×15%</span></span>
+    <span class="dim-score score-high">9/10</span>
+  </div>
+  <div class="dim-content">阿根廷8胜1平1负🔥炽热态（胜率80%进25失3），走势WWWWWW全胜；阿尔及利亚6胜3平1负⚡上升态（胜率60%），走势WWDWLD（500.com）</div>
+</div>
+<div class="dim-row is-handicap">
+  <div class="dim-header">
+    <span class="dim-label">盘口密码<span class="weight">×35%</span></span>
+    <span class="dim-score score-mid">7/10</span>
+  </div>
+  <div class="dim-content"></div>
+  <div class="hc-block"><div class="hc-block-title">凯利</div>竞彩即凯利 胜0.87/平0.88/负0.98（返还率88.58%）<span class="signal-warn">→</span> 胜项0.87全场最低=确认主胜方向；澳门负项0.71极低=防客胜偷分但主胜方向明确</div>
+<div class="hc-block"><div class="hc-block-title">概率</div>竞彩即概率 胜69.20%/平20.84%/负9.95%，初盘<span class="signal-warn">→</span>即时胜率↓1.06%平率↑0.72%=轻微防平但主胜近7成概率稳固</div>
+<div class="hc-block"><div class="hc-block-title">亚盘</div>初盘一球/球半稳定，部分公司升球半；赢盘率40%暗示让1球有压力</div>
+<div class="hc-block"><div class="hc-block-title">返还率</div>竞彩88.58% vs 立博94.48%，竞彩控制主胜赔付</div>
+</div>
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">交锋心结<span class="weight">×10%</span></span>
+    <span class="dim-score score-high">8/10</span>
+  </div>
+  <div class="dim-content">阿根廷对北非球队历史全胜，血脉压制；澳门提示「上届世界杯首场不敌沙特要极力避免」（500.com心水）</div>
+</div>
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">阵容博弈<span class="weight">×15%</span></span>
+    <span class="dim-score score-high">8/10</span>
+  </div>
+  <div class="dim-content">阿根廷⭐⭐⭐⭐⭐（8亿欧梅西/劳塔罗/迪马利亚）vs 阿尔及利亚⭐⭐⭐（2.5亿欧马赫雷斯领衔但整体差距大）（懂球帝API）</div>
+</div>
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">赛程暗线<span class="weight">×10%</span></span>
+    <span class="dim-score score-mid">7/10</span>
+  </div>
+  <div class="dim-content">J组首轮体能充沛；卫冕冠军首战战意十足（500.com心水）</div>
+</div>
+  </div>
+  <div class="match-card-footer">
+    <div>
+      <div class="recommendation">
+        <span class="rec-direction">让球胜</span>
+        <span class="rec-sp">SP 1.90</span>
+      </div>
+      <div class="risk-note">⚠️ 竞彩胜凯利0.87最低确认主胜方向，但赢盘率40%+轻微防平信号，让1球有走盘风险</div>
+    </div>
+    <div class="total-score">
+      <span class="score-num">79</span><span class="score-max">/100</span>
+    </div>
+  </div>
+</div>
+
+<div class="match-card">
+  <div class="match-card-header">
+    <span class="match-label">周二020 奥地利 vs 约旦</span>
+    <span class="match-tag tag-suppress">压制局</span>
+  </div>
+  <div class="match-card-body">
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">战力鸿沟<span class="weight">×15%</span></span>
+    <span class="dim-score score-high">8/10</span>
+  </div>
+  <div class="dim-content">FIFA排名24 vs 63，差39位A级压制；身价2.4亿 vs 2030万，12倍差距（懂球帝API）</div>
+</div>
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">状态引擎<span class="weight">×15%</span></span>
+    <span class="dim-score score-high">8/10</span>
+  </div>
+  <div class="dim-content">奥地利8胜1平1负🔥炽热态（胜率80%进27失4），走势WWWDDL；约旦近10场4胜1平5负📉下滑态（胜率40%失15球），走势LLDDDW🥶冰封态（500.com）</div>
+</div>
+<div class="dim-row is-handicap">
+  <div class="dim-header">
+    <span class="dim-label">盘口密码<span class="weight">×35%</span></span>
+    <span class="dim-score score-high">8/10</span>
+  </div>
+  <div class="dim-content"></div>
+  <div class="hc-block"><div class="hc-block-title">凯利</div>竞彩即凯利 胜0.87/平0.89/负0.97（返还率88.54%）<span class="signal-warn">→</span> 胜项0.87最低=看主胜；澳门负项0.79低=防客胜但主胜方向明确；威廉希尔负项0.82极低=防范客胜</div>
+<div class="hc-block"><div class="hc-block-title">概率</div>竞彩即概率 胜71.98%/平18.07%/负9.95%，初盘<span class="signal-warn">→</span>即时胜率↓1.20%平率↑0.88%=轻微防平但主胜72%占绝对优势</div>
+<div class="hc-block"><div class="hc-block-title">亚盘</div>初盘一球/球半<span class="signal-warn">→</span>即时球半（升盘！）<span class="signal-up">✅</span>升盘=机构加大上盘门槛=真看好奥地利赢2球+</div>
+<div class="hc-block"><div class="hc-block-title">返还率</div>竞彩88.54% vs 威廉希尔92.20%，竞彩控制主胜赔付</div>
+</div>
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">交锋心结<span class="weight">×10%</span></span>
+    <span class="dim-score score-high">8/10</span>
+  </div>
+  <div class="dim-content">无历史交锋；澳门推介奥地利「约旦作为世界杯新军赛事经验欠缺」（500.com心水）</div>
+</div>
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">阵容博弈<span class="weight">×15%</span></span>
+    <span class="dim-score score-high">8/10</span>
+  </div>
+  <div class="dim-content">奥地利⭐⭐⭐⭐（2.4亿欧阿拉巴/萨比策/阿瑙托维奇德甲系）vs 约旦⭐⭐（2030万欧无五大联赛球员）（500.com预计阵容/懂球帝API）</div>
+</div>
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">赛程暗线<span class="weight">×10%</span></span>
+    <span class="dim-score score-mid">6/10</span>
+  </div>
+  <div class="dim-content">J组首轮体能充沛；12点开赛当地中午高温可能影响节奏（500.com赛事页）</div>
+</div>
+  </div>
+  <div class="match-card-footer">
+    <div>
+      <div class="recommendation">
+        <span class="rec-direction">让球胜</span>
+        <span class="rec-sp">SP 1.79</span>
+      </div>
+      
+    </div>
+    <div class="total-score">
+      <span class="score-num">79</span><span class="score-max">/100</span>
+    </div>
+  </div>
+</div>
+
+<div class="section-title">🎯 4串1方案</div>
+
+<div class="parlay-card parlay-safe">
+  <div class="parlay-header">
+    <span class="parlay-title">🎯 稳妥方案</span>
+    <span class="parlay-sp">7.63 <small>串关SP</small></span>
+  </div>
+  <div class="parlay-items">
+<div class="parlay-item">
+  <span class="item-match">法国 vs 塞内加尔</span>
+  <span class="item-dir">让球胜</span>
+  <span class="item-sp">2.12</span>
+</div>
+<div class="parlay-item">
+  <span class="item-match">伊拉克 vs 挪威</span>
+  <span class="item-dir">让球负</span>
+  <span class="item-sp">2.38</span>
+</div>
+<div class="parlay-item">
+  <span class="item-match">阿根廷 vs 阿尔及利亚</span>
+  <span class="item-dir">让球胜</span>
+  <span class="item-sp">1.90</span>
+</div>
+<div class="parlay-item">
+  <span class="item-match">奥地利 vs 约旦</span>
+  <span class="item-dir">让球胜</span>
+  <span class="item-sp">1.79</span>
+</div>
+  </div>
+  <div class="parlay-logic">挪威让2球大胜最稳（凯利+亚盘升盘信号最强）；阿根廷+奥地利让球胜凯利方向一致；法国让1球有降盘风险但实力差距兜底。唯一隐患：法国降盘+平凯利最低</div>
+  <div class="confidence">置信度：<span class="stars">⭐⭐⭐⭐</span></div>
+</div>
+
+<div class="parlay-card parlay-value">
+  <div class="parlay-header">
+    <span class="parlay-title">🔥 价值方案</span>
+    <span class="parlay-sp">15.60 <small>串关SP</small></span>
+  </div>
+  <div class="parlay-items">
+<div class="parlay-item">
+  <span class="item-match">法国 vs 塞内加尔</span>
+  <span class="item-dir">让球平</span>
+  <span class="item-sp">3.37</span>
+</div>
+<div class="parlay-item">
+  <span class="item-match">伊拉克 vs 挪威</span>
+  <span class="item-dir">让球负</span>
+  <span class="item-sp">2.38</span>
+</div>
+<div class="parlay-item">
+  <span class="item-match">阿根廷 vs 阿尔及利亚</span>
+  <span class="item-dir">让球胜</span>
+  <span class="item-sp">1.90</span>
+</div>
+<div class="parlay-item">
+  <span class="item-match">奥地利 vs 约旦</span>
+  <span class="item-dir">让球胜</span>
+  <span class="item-sp">1.79</span>
+</div>
+  </div>
+  <div class="parlay-logic">法国让1球：竞彩平凯利0.84最低+亚盘降盘+赢盘率40%+2002恩怨，让球平3.37是概率+赔率双优方向；挪威让2球升盘确认大胜；阿根廷+奥地利稳胆</div>
+  <div class="confidence">置信度：<span class="stars">⭐⭐⭐</span></div>
+</div>
+
+<div class="parlay-card parlay-dark">
+  <div class="parlay-header">
+    <span class="parlay-title">💎 冷门方案</span>
+    <span class="parlay-sp">36.23 <small>串关SP</small></span>
+  </div>
+  <div class="parlay-items">
+<div class="parlay-item">
+  <span class="item-match">法国 vs 塞内加尔</span>
+  <span class="item-dir">让球负</span>
+  <span class="item-sp">2.77</span>
+</div>
+<div class="parlay-item">
+  <span class="item-match">伊拉克 vs 挪威</span>
+  <span class="item-dir">让球平</span>
+  <span class="item-sp">3.89</span>
+</div>
+<div class="parlay-item">
+  <span class="item-match">阿根廷 vs 阿尔及利亚</span>
+  <span class="item-dir">让球平</span>
+  <span class="item-sp">3.50</span>
+</div>
+<div class="parlay-item">
+  <span class="item-match">奥地利 vs 约旦</span>
+  <span class="item-dir">让球胜</span>
+  <span class="item-sp">1.79</span>
+</div>
+  </div>
+  <div class="parlay-logic">法国降盘+2002被塞内加尔爆冷，让1球负2.77有历史呼应；挪威让2球伊拉克死守可能只输1球走盘3.89；阿根廷赢盘率40%让1球平3.50；奥地利保底</div>
+  <div class="confidence">置信度：<span class="stars">⭐⭐</span></div>
+</div>
+
+<div class="footer">
+  <div class="sources">📊 500.com竞彩 | 懂球帝API | 欧赔/亚盘分析页</div>
+  <div class="sources">📋 POWER-6六维模型 · 凯利指数 · 隐含概率</div>
+  <div class="disclaimer">⚠️ 以上分析仅供参考，不构成投注建议</div>
+</div>
+
+</body>
+</html>

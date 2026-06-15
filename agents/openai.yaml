@@ -1,0 +1,5 @@
+interface:
+  display_name: "世界杯竞彩指南"
+  short_description: "FIFA World Cup Asian Handicap Parlay Betting Guide"
+  brand_color: "#1B7A3D"
+  default_prompt: "使用 $worldcup-betting-guide 分析世界杯竞彩串关方案"
