@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⚽ 世界杯竞彩分析报告 | 2026-06-19</title>
+<style>
+  :root {
+    --bg: #0a0c10;
+    --card: #12151e;
+    --card-inner: #181c28;
+    --card-hover: #1e2336;
+    --border: #252a3e;
+    --border-light: #2f3550;
+    --text: #e8e9ed;
+    --text-dim: #6b7194;
+    --accent: #e8a820;
+    --accent-glow: rgba(232,168,32,0.25);
+    --accent-dim: rgba(232,168,32,0.08);
+    --green: #2dd4a0;
+    --green-dim: rgba(45,212,160,0.10);
+    --red: #f0544f;
+    --red-dim: rgba(240,84,79,0.10);
+    --blue: #4f8ff7;
+    --blue-dim: rgba(79,143,247,0.10);
+    --purple: #b06ef5;
+    --purple-dim: rgba(176,110,245,0.10);
+    --cyan: #22d3ee;
+    --cyan-dim: rgba(34,211,238,0.08);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    padding: 20px 16px;
+    max-width: 820px;
+    margin: 0 auto;
+  }
+
+  /* ─── Header ─── */
+  .header {
+    text-align: center;
+    padding: 40px 24px 32px;
+    background: linear-gradient(160deg, #12151e 0%, #1a1f35 50%, #12151e 100%);
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '';
+    position: absolute;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: radial-gradient(ellipse at 30% 20%, rgba(232,168,32,0.06) 0%, transparent 50%);
+    pointer-events: none;
+  }
+  .header .logo { font-size: 32px; margin-bottom: 8px; }
+  .header h1 { font-size: 20px; font-weight: 700; margin-bottom: 12px; letter-spacing: 0.5px; }
+  .header h1 span { color: var(--accent); }
+  .header .meta { color: var(--text-dim); font-size: 13px; letter-spacing: 1px; }
+  .header .meta span { margin: 0 10px; }
+  .header .divider {
+    width: 60px; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    margin: 14px auto 0;
+  }
+
+  /* ─── Section Title ─── */
+  .section-title {
+    font-size: 14px;
+    font-weight: 700;
+    padding: 10px 18px;
+    margin: 28px 0 14px;
+    background: var(--accent-dim);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+    color: var(--accent);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  /* ─── Match Table ─── */
+  .match-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--card);
+    border-radius: 14px;
+    overflow: hidden;
+    font-size: 13px;
+    border: 1px solid var(--border);
+  }
+  .match-table th {
+    background: var(--card-inner);
+    padding: 12px;
+    text-align: center;
+    color: var(--text-dim);
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+  .match-table td {
+    padding: 12px;
+    text-align: center;
+    border-top: 1px solid var(--border);
+  }
+  .match-table tr:hover td { background: var(--card-hover); }
+  .team-name { font-weight: 700; }
+  .vs { color: var(--text-dim); font-size: 11px; margin: 0 4px; }
+  .handicap {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  .handicap.positive { background: var(--green-dim); color: var(--green); border: 1px solid rgba(45,212,160,0.2); }
+  .handicap.negative { background: var(--red-dim); color: var(--red); border: 1px solid rgba(240,84,79,0.2); }
+  .sp-value { font-family: "SF Mono", "JetBrains Mono", "Fira Code", monospace; font-size: 12px; color: var(--text-dim); }
+
+  /* ─── Match Card ─── */
+  .match-card {
+    background: var(--card);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+  .match-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, var(--card-inner), var(--card));
+    border-bottom: 1px solid var(--border);
+  }
+  .match-card-header .match-label {
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 0.3px;
+  }
+  .match-card-header .match-tag {
+    font-size: 11px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  .tag-crush { background: var(--red-dim); color: var(--red); border: 1px solid rgba(240,84,79,0.25); }
+  .tag-suppress { background: rgba(249,115,22,0.10); color: #f97316; border: 1px solid rgba(249,115,22,0.25); }
+  .tag-advantage { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(232,168,32,0.25); }
+  .tag-close { background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(79,143,247,0.25); }
+  .tag-even { background: var(--purple-dim); color: var(--purple); border: 1px solid rgba(176,110,245,0.25); }
+
+  .match-card-body { padding: 20px; }
+
+  /* ─── Dim Row ─── */
+  .dim-row {
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(37,42,62,0.5);
+  }
+  .dim-row:last-child { border-bottom: none; }
+
+  .analysis-summary {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 14px 16px;
+    margin-top: 8px;
+    background: linear-gradient(135deg, rgba(232,168,32,0.08), rgba(232,168,32,0.03));
+    border-radius: 10px;
+    border: 1px solid rgba(232,168,32,0.15);
+  }
+  .analysis-summary .summary-icon { font-size: 16px; }
+  .analysis-summary .summary-text {
+    color: #e8e9ed;
+    font-size: 13px;
+    line-height: 1.6;
+    font-weight: 500;
+  }
+
+  .dim-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+  .dim-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-dim);
+    letter-spacing: 0.5px;
+  }
+  .dim-label .weight { font-size: 10px; color: var(--accent); margin-left: 6px; font-weight: 600; }
+  .dim-score {
+    font-weight: 800;
+    font-size: 14px;
+    padding: 2px 10px;
+    border-radius: 6px;
+  }
+  .score-high { color: var(--green); background: var(--green-dim); }
+  .score-mid { color: var(--accent); background: var(--accent-dim); }
+  .score-low { color: var(--red); background: var(--red-dim); }
+  .dim-content {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.8;
+  }
+
+  /* ─── 盘口密码 Special Style ─── */
+  .dim-row.is-handicap {
+    background: linear-gradient(135deg, var(--cyan-dim), var(--accent-dim));
+    margin: 4px -12px;
+    padding: 14px 16px;
+    border-radius: 10px;
+    border-bottom: none;
+  }
+  .dim-row.is-handicap .dim-label {
+    color: var(--cyan);
+    font-size: 14px;
+  }
+  .dim-row.is-handicap .dim-content {
+    color: var(--text);
+  }
+  /* 盘口子块 */
+  .hc-block {
+    margin: 6px 0;
+    padding: 8px 12px;
+    background: rgba(10,12,16,0.5);
+    border-radius: 8px;
+    border-left: 3px solid var(--cyan);
+    font-size: 12px;
+    line-height: 1.9;
+  }
+  .hc-block-title {
+    font-weight: 700;
+    color: var(--cyan);
+    font-size: 11px;
+    letter-spacing: 1px;
+    margin-bottom: 3px;
+    text-transform: uppercase;
+  }
+  .hc-block .signal-up { color: var(--green); font-weight: 700; }
+  .hc-block .signal-down { color: var(--red); font-weight: 700; }
+  .hc-block .signal-warn { color: var(--accent); font-weight: 700; }
+  .hc-block .signal-mute { color: var(--text-dim); }
+
+  /* ─── Footer ─── */
+  .match-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 20px;
+    background: linear-gradient(135deg, #0e1018, #141825);
+    border-top: 1px solid var(--border);
+  }
+  .recommendation {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .rec-direction {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--accent);
+    letter-spacing: 1px;
+  }
+  .rec-sp {
+    font-size: 12px;
+    padding: 3px 10px;
+    background: var(--accent-dim);
+    border: 1px solid rgba(232,168,32,0.2);
+    border-radius: 6px;
+    color: var(--accent);
+    font-weight: 700;
+    font-family: "SF Mono", "JetBrains Mono", monospace;
+  }
+  .total-score {
+    font-size: 22px;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+  }
+  .total-score .score-num { color: var(--accent); }
+  .total-score .score-max { color: var(--text-dim); font-size: 13px; font-weight: 400; }
+  .risk-note {
+    font-size: 12px;
+    color: var(--red);
+    margin-top: 6px;
+    padding-left: 2px;
+  }
+
+  /* ─── Parlay Cards ─── */
+  .parlay-card {
+    background: var(--card);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    padding: 24px;
+    margin-bottom: 16px;
+  }
+  .parlay-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .parlay-title { font-size: 16px; font-weight: 800; letter-spacing: 0.5px; }
+  .parlay-sp {
+    font-size: 24px;
+    font-weight: 900;
+    color: var(--accent);
+    font-family: "SF Mono", "JetBrains Mono", monospace;
+  }
+  .parlay-sp small { font-size: 11px; color: var(--text-dim); font-weight: 400; letter-spacing: 0; }
+  .parlay-items { margin-bottom: 14px; }
+  .parlay-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    border-radius: 10px;
+    margin-bottom: 5px;
+    font-size: 13px;
+  }
+  .parlay-item .item-match { font-weight: 500; }
+  .parlay-item .item-dir { font-weight: 800; color: var(--accent); }
+  .parlay-item .item-sp { color: var(--text-dim); font-size: 12px; font-family: "SF Mono", "JetBrains Mono", monospace; }
+  .parlay-logic {
+    font-size: 13px;
+    color: var(--text-dim);
+    padding: 12px 14px;
+    background: var(--card-inner);
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    line-height: 1.8;
+  }
+  .confidence { margin-top: 10px; }
+  .confidence .stars { color: var(--accent); letter-spacing: 3px; font-size: 14px; }
+
+  .parlay-safe .parlay-item { background: var(--green-dim); border: 1px solid rgba(45,212,160,0.1); }
+  .parlay-safe .parlay-title { color: var(--green); }
+  .parlay-value .parlay-item { background: var(--accent-dim); border: 1px solid rgba(232,168,32,0.1); }
+  .parlay-value .parlay-title { color: var(--accent); }
+  .parlay-dark .parlay-item { background: var(--purple-dim); border: 1px solid rgba(176,110,245,0.1); }
+  .parlay-dark .parlay-title { color: var(--purple); }
+
+  .footer {
+    text-align: center;
+    padding: 28px 16px;
+    color: var(--text-dim);
+    font-size: 11px;
+    letter-spacing: 0.5px;
+  }
+  .footer .sources { margin-bottom: 4px; }
+  .footer .disclaimer { color: var(--red); font-weight: 600; }
+
+  @media (max-width: 600px) {
+    body { padding: 8px; }
+    .match-card-header { flex-direction: column; gap: 8px; }
+    .dim-row { flex-direction: column; gap: 4px; }
+    .dim-label { width: auto; }
+    .dim-score { text-align: left; width: auto; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">⚽</div>
+  <h1>世界杯竞彩【<span>胜平负</span>】2串1</h1>
+  <div class="meta">
+    <span>2026-06-19</span>
+    <span>·</span>
+    <span>胜平负</span>
+    <span>·</span>
+    <span>2场</span>
+  </div>
+  <div class="divider"></div>
+</div>
+
+<div class="section-title">📊 赛事一览</div>
+<table class="match-table">
+  <thead>
+    <tr>
+      <th>编号</th>
+      <th>时间</th>
+      <th>对阵</th>
+      <th>实力差</th>
+      <th>SP（胜/平/负）</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+  <td>周四025</td>
+  <td>00:00</td>
+  <td><span class="team-name">捷克</span> <span class="vs">vs</span> <span class="team-name">南非</span></td>
+  <td><span class="handicap positive">不让球</span></td>
+  <td><span class="sp-value">1.69 / 3.40 / 4.20</span></td>
+</tr>
+<tr>
+  <td>周四026</td>
+  <td>03:00</td>
+  <td><span class="team-name">瑞士</span> <span class="vs">vs</span> <span class="team-name">波黑</span></td>
+  <td><span class="handicap positive">不让球</span></td>
+  <td><span class="sp-value">1.45 / 3.75 / 5.50</span></td>
+</tr>
+  </tbody>
+</table>
+
+<div class="section-title">🔍 POWER-6 六维分析</div>
+
+<div class="match-card">
+  <div class="match-card-header">
+    <span class="match-label">周四025 捷克 vs 南非</span>
+    <span class="match-tag tag-close">主胜偏热</span>
+  </div>
+  <div class="match-card-body">
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">战力鸿沟<span class="weight">×15%</span></span>
+    <span class="dim-score score-mid">7/10</span>
+  </div>
+  <div class="dim-content">FIFA排名40 vs 66，差26位B级优势；捷克五大联赛11人 vs 南非6人，身价差距1.5x</div>
+</div>
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">状态引擎<span class="weight">×15%</span></span>
+    <span class="dim-score score-mid">5/10</span>
+  </div>
+  <div class="dim-content">捷克近10场4胜3平3负（胜率40%）🔄波动态；南非1胜4平5负（胜率10%）📉下滑态；南非上轮0:2墨西哥零进球</div>
+</div>
+<div class="dim-row is-handicap">
+  <div class="dim-header">
+    <span class="dim-label">盘口密码<span class="weight">×35%</span></span>
+    <span class="dim-score score-high">8/10</span>
+  </div>
+  <div class="dim-content"></div>
+  <div class="hc-block"><div class="hc-block-title">凯利</div>主胜凯利0.88全场最低，机构对主胜赔付控制明显。</div>
+<div class="hc-block"><div class="hc-block-title">概率</div>主胜概率68%/平21%/负11%，初盘<span class="signal-warn">→</span>即时主胜赔率从1.75降到1.69，热度持续上升。</div>
+<div class="hc-block"><div class="hc-block-title">亚盘</div>半球低水，上盘偏热但未到大热程度。</div>
+<div class="hc-block"><div class="hc-block-title">返还率</div>竞彩88.3%偏低，主胜方向控制最严</div>
+</div>
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">交锋心结<span class="weight">×10%</span></span>
+    <span class="dim-score score-mid">5/10</span>
+  </div>
+  <div class="dim-content">双方无交锋历史，数据空白</div>
+</div>
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">阵容博弈<span class="weight">×15%</span></span>
+    <span class="dim-score score-mid">6/10</span>
+  </div>
+  <div class="dim-content">捷克五大联赛11人（希克领衔），南非仅6人且多为边缘球员；但捷克后防2主力伤疑，防守端有隐患</div>
+</div>
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">赛程暗线<span class="weight">×10%</span></span>
+    <span class="dim-score score-mid">7/10</span>
+  </div>
+  <div class="dim-content">小组赛第2轮，捷克上轮1:2输韩国背水一战必须抢3分；南非0:2输墨西哥但对手强，少输当赢心态</div>
+</div>
+  <div class="analysis-summary">
+    <span class="summary-icon">📊</span>
+    <span class="summary-text">凯利指数明确偏向主胜，捷克战意更强但后防有隐患，主胜概率大但需防平</span>
+  </div>
+  </div>
+  <div class="match-card-footer">
+    <div>
+      <div class="risk-note">⚠️ 捷克后防2主力伤疑，南非身体对抗强，需防平局</div>
+    </div>
+    <div class="total-score">
+      <span class="score-num">56</span><span class="score-max">/100</span>
+    </div>
+  </div>
+</div>
+
+<div class="match-card">
+  <div class="match-card-header">
+    <span class="match-label">周四026 瑞士 vs 波黑</span>
+    <span class="match-tag tag-close">强队让浅</span>
+  </div>
+  <div class="match-card-body">
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">战力鸿沟<span class="weight">×15%</span></span>
+    <span class="dim-score score-high">8/10</span>
+  </div>
+  <div class="dim-content">FIFA排名19 vs 58，差39位B级碾压；瑞士五大联赛17人 vs 波黑10人，身价差距2.8x</div>
+</div>
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">状态引擎<span class="weight">×15%</span></span>
+    <span class="dim-score score-mid">6/10</span>
+  </div>
+  <div class="dim-content">瑞士近10场5胜3平2负（胜率50%）⚡上升态；波黑3胜3平4负（胜率30%）🔄波动态；瑞士上轮1:1平卡塔尔爆冷</div>
+</div>
+<div class="dim-row is-handicap">
+  <div class="dim-header">
+    <span class="dim-label">盘口密码<span class="weight">×35%</span></span>
+    <span class="dim-score score-mid">6/10</span>
+  </div>
+  <div class="dim-content"></div>
+  <div class="hc-block"><div class="hc-block-title">凯利</div>三项凯利0.89/0.92/0.94，主胜最低但差距不大，平局凯利也偏低。</div>
+<div class="hc-block"><div class="hc-block-title">概率</div>主胜概率72%/平18%/负10%，初盘<span class="signal-warn">→</span>即时平局赔率从3.90降到3.75，防冷迹象明显。</div>
+<div class="hc-block"><div class="hc-block-title">亚盘</div>一球盘水位0.88偏浅，上盘阻力不大但平局受重视。</div>
+<div class="hc-block"><div class="hc-block-title">返还率</div>竞彩88.2%偏低，主胜和平局双控</div>
+</div>
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">交锋心结<span class="weight">×10%</span></span>
+    <span class="dim-score score-low">4/10</span>
+  </div>
+  <div class="dim-content">双方近3次交战2平1负，瑞士无优势；波黑球风硬朗克瑞士技术流，平局多</div>
+</div>
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">阵容博弈<span class="weight">×15%</span></span>
+    <span class="dim-score score-mid">7/10</span>
+  </div>
+  <div class="dim-content">瑞士⭐⭐⭐⭐（德甲7+意甲4+法甲3，扎卡领衔阵容厚）vs 波黑⭐⭐⭐（意甲3+德甲2，哲科老当益壮但整体年龄偏大）</div>
+</div>
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">赛程暗线<span class="weight">×10%</span></span>
+    <span class="dim-score score-mid">6/10</span>
+  </div>
+  <div class="dim-content">凌晨3点开赛欧洲球员友好；波黑首战1:1加拿大队内氛围好，无必须赢球压力</div>
+</div>
+  <div class="analysis-summary">
+    <span class="summary-icon">📊</span>
+    <span class="summary-text">纸面实力瑞士碾压，但平局凯利偏低+赔率持续下降，历史交锋平局多，平局概率不容忽视</span>
+  </div>
+  </div>
+  <div class="match-card-footer">
+    <div>
+      <div class="risk-note">⚠️ 瑞士上轮1:1平卡塔尔心态受影响，波黑球风克瑞士，平局需防</div>
+    </div>
+    <div class="total-score">
+      <span class="score-num">54</span><span class="score-max">/100</span>
+    </div>
+  </div>
+</div>
+
+<div class="section-title">🎯 2串1方案</div>
+
+<div class="parlay-card parlay-safe">
+  <div class="parlay-header">
+    <span class="parlay-title">🎓 Dr.Karl Vogel · 量化派 · 保守方案</span>
+    <span class="parlay-sp">2.45 <small>串关SP</small></span>
+  </div>
+  <div class="parlay-items">
+<div class="parlay-item">
+  <span class="item-match">捷克 vs 南非</span>
+  <span class="item-dir">胜</span>
+  <span class="item-sp">1.69</span>
+</div>
+<div class="parlay-item">
+  <span class="item-match">瑞士 vs 波黑</span>
+  <span class="item-dir">胜</span>
+  <span class="item-sp">1.45</span>
+</div>
+  </div>
+  <div class="parlay-logic">凯利指数一致性筛选：两场主胜凯利均为全场最低（捷克0.88/瑞士0.89），机构对主胜赔付控制最严。不博冷，只求稳，双胜2串1赔率2.45倍。</div>
+  <div class="confidence">置信度：<span class="stars">⭐⭐⭐⭐</span></div>
+</div>
+
+<div class="parlay-card parlay-value">
+  <div class="parlay-header">
+    <span class="parlay-title">👴 Johnny Liu · 盘口派 · 价值方案</span>
+    <span class="parlay-sp">6.35 <small>串关SP</small></span>
+  </div>
+  <div class="parlay-items">
+<div class="parlay-item">
+  <span class="item-match">捷克 vs 南非</span>
+  <span class="item-dir">胜</span>
+  <span class="item-sp">1.69</span>
+</div>
+<div class="parlay-item">
+  <span class="item-match">瑞士 vs 波黑</span>
+  <span class="item-dir">平</span>
+  <span class="item-sp">3.75</span>
+</div>
+  </div>
+  <div class="parlay-logic">捷克主胜没问题，瑞士这边平局凯利0.92仅比主胜高0.03，且平局赔率从3.90降到3.75，机构持续吸筹平局。历史交锋瑞士对波黑2平1负，球风相克。口诀：赔率下降=机构看好，平局凯利低=必有猫腻。</div>
+  <div class="confidence">置信度：<span class="stars">⭐⭐⭐</span></div>
+</div>
+
+<div class="parlay-card parlay-dark">
+  <div class="parlay-header">
+    <span class="parlay-title">🕵️ Mia Carter · 消息派 · 冷门方案</span>
+    <span class="parlay-sp">14.70 <small>串关SP</small></span>
+  </div>
+  <div class="parlay-items">
+<div class="parlay-item">
+  <span class="item-match">捷克 vs 南非</span>
+  <span class="item-dir">平</span>
+  <span class="item-sp">3.40</span>
+</div>
+<div class="parlay-item">
+  <span class="item-match">瑞士 vs 波黑</span>
+  <span class="item-dir">平</span>
+  <span class="item-sp">3.75</span>
+</div>
+  </div>
+  <div class="parlay-logic">捷克后防2主力伤疑+上轮输球心态急，南非死守偷平不难；瑞士上轮平卡塔尔全队心态波动，波黑球风硬朗专克技术流，且历史交锋平局多。双平博冷，赔率14.7倍。</div>
+  <div class="confidence">置信度：<span class="stars">⭐⭐</span></div>
+</div>
+
+<div class="footer">
+  <div class="sources">📊 500.com竞彩 | 懂球帝API | 欧赔/亚盘分析页</div>
+  <div class="sources">📋 POWER-6六维模型 · 凯利指数 · 隐含概率</div>
+  <div class="disclaimer">⚠️ 以上分析仅供参考，不构成投注建议</div>
+</div>
+
+</body>
+</html>
