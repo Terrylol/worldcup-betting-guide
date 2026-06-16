@@ -6,9 +6,11 @@
 
 ## 🔥 这是什么？
 
-这不是一个普通的足球预测工具。这是一个**融合了机构级盘口解密、凯利指数量化分析、亚盘水位追踪、六维交叉验证引擎**的世界杯竞彩串关分析系统。
+这是一个 **Agent Skill** —— 世界杯竞彩串关投注分析引擎。由 `SKILL.md`(给 LLM 读的流程定义)+ `scripts/`(数据采集脚本)+ `references/`(方法论手册)组成，需要 OpenClaw / Claude Code / Codex 这类 Agent 加载后使用。
 
 说人话：**帮你看穿庄...啊不，机构的底牌。**
+
+这不是一个普通的足球预测工具。这是一个**融合了机构级盘口解密、凯利指数量化分析、亚盘水位追踪、六维交叉验证引擎**的世界杯竞彩串关分析系统。
 
 市面上99%的足彩分析都是"我觉得法国能赢"——我们不一样。我们用数据说话：
 
@@ -77,29 +79,23 @@
 
 ## 🚀 快速开始
 
-### 分析6月17日世界杯让球胜平负4串1
+加载为 Skill 后，在 Agent 对话中直接说：
 
-```bash
-# 1. 抓取赛事
-python3 scripts/fetch_matches.py --date 2026-06-17
+> "分析6月17日世界杯让球胜平负4串1，出 HTML 报告"
 
-# 2. 抓取深度数据（每场）
-python3 scripts/fetch_analysis.py --fixtureid 1359212 --page all --json
+Agent 会自动执行：**参数确认 → 抓取赛事列表 → 抓取深度数据 → 抓取阵容 → POWER-6 六维分析 → 生成报告**。
 
-# 3. 抓取阵容
-python3 scripts/fetch_squad.py --team 法国
+### 作为 Agent Skill 使用
 
-# 4. 生成报告
-python3 scripts/generate_report.py --data analysis.json --format html -o report
-```
+本 Skill 兼容主流 Agent 框架，加载方式：
 
-### 作为 Codex Skill 使用
+| Agent | 加载方式 | 调用示例 |
+|-------|---------|---------|
+| **OpenClaw** | 放到 `~/.openclaw/skills/` 目录（多 agent 共享） | `分析 6 月 17 日世界杯让球 4 串 1` |
+| **Claude Code** | 放到 `~/.claude/skills/` 目录 | `帮我跑一下 worldcup-betting-guide 这个 skill，分析明天 4 场比赛` |
+| **Codex** | 放到 `~/.agents/skills/` 目录 | `帮我分析6月17日世界杯让球胜平负4串1` |
 
-在 Codex 中直接说：
-
-> "帮我分析6月17日世界杯让球胜平负4串1"
-
-Skill 自动执行全流程：参数确认 → 数据抓取 → 六维分析 → HTML报告。
+**三种 Agent 加载路径殊途同归**：Agent 读取 `SKILL.md` → 按流程调用 `scripts/` 下脚本 → 用 LLM 能力做语义解析和六维分析 → 输出结构化报告。
 
 ---
 
