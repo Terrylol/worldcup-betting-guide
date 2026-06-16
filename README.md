@@ -125,7 +125,7 @@ worldcup-betting-guide/
 
 ## 📋 分析报告样例
 
-[6月17日世界杯让球胜平负4串1分析报告](docs/2026-06-17-rangqiu-report.html)
+[6月17日世界杯让球胜平负4串1分析报告](https://htmlpreview.github.io/?https://raw.githubusercontent.com/Terrylol/worldcup-betting-guide/main/docs/2026-06-17-rangqiu-report.html)
 
 四场分析概要：
 
