@@ -305,3 +305,157 @@ curl -s 'https://sport-data.dongqiudi.com/soccer/biz/dqd/team/sample/1869?app=dq
   -H 'Origin: https://www.dongqiudi.com' \
   -H 'Accept: application/json'
 ```
+
+## 9. Wikipedia MediaWiki API（2026 世界杯大名单）
+
+### 概述
+维基百科的 `2026 FIFA World Cup squads` 页面包含所有 48+ 参赛队的最终 26 人名单、教练、年龄、出场数、进球数、所属俱乐部。这是**最权威的免费大名单来源**。
+
+### 接入
+- **端点**: `https://en.wikipedia.org/w/api.php`
+- **方法**: `GET`
+- **必要头**: `User-Agent`（必须自定义，默认 UA 被 Wikimedia 拒）
+- **无需 API key**
+- **数据格式**: wikitext（MediaWiki 标记语言）
+
+### 核心端点
+| 用途 | URL |
+|------|-----|
+| 抓 squads 页完整 wikitext | `?action=parse&page=2026_FIFA_World_Cup_squads&format=json&prop=wikitext` |
+| 搜索页面 | `?action=query&list=search&srsearch=<keyword>&format=json` |
+
+### 字段说明
+每个球员包含：
+- `no` — 球衣号码
+- `pos` — 位置（GK / DF / MF / FW）
+- `name` — 球员名（已剥去 wiki 链接）
+- `caps` — 国家队出场数
+- `goals` — 国家队进球数
+- `club` — 所属俱乐部（已剥去 wiki 链接）
+- `clubnat` — 俱乐部所在国（ISO 3 字母代码：ENG/ESP/GER/ITA/FRA 等）
+- `birth_date` — 出生日期（ISO 格式）
+
+附加：
+- `position_distribution` — 位置分布统计（GK/DF/MF/FW 各多少人）
+- `league_distribution` — 球员所在联赛分布（基于 clubnat 映射到 5 大联赛）
+
+### 自动化脚本
+`scripts/fetch_squad_wiki.py`
+
+```bash
+# 列出所有 48+ 参赛队
+python3 scripts/fetch_squad_wiki.py --list-teams
+
+# 抓法国队大名单
+python3 scripts/fetch_squad_wiki.py --team France
+
+# 抓沙特阿拉伯（注意多词国家名要加引号）
+python3 scripts/fetch_squad_wiki.py --team "Saudi Arabia"
+
+# 抓所有队概况（48+ 队位置/联赛分布）
+python3 scripts/fetch_squad_wiki.py --all
+
+# JSON 输出（用于 LLM 解析）
+python3 scripts/fetch_squad_wiki.py --team France --json
+```
+
+### 在 POWER-6 模型中的角色
+
+补 POWER-6 模型的「**阵容博弈**」维度（15%）。实际工作流：
+
+1. `fetch_squad_wiki.py --team France` → 26 人名单 + 各自俱乐部
+2. 对照 `fetch_xg.py` 反查每个球员的俱乐部 xG（仅 5 大联赛球员可得）
+3. 看联赛分布：法国 8 人 Ligue 1 / 7 人 EPL = 阵容结构合理
+4. 看位置分布：GK=3 / DF=9 / MF=7 / FW=7 = 标准配置
+5. 与 500.com 的"伤停/缺阵"信息交叉对比
+
+### 注意事项
+- **自定义 User-Agent 是必须的**（含项目名和联系方式），否则被 Wikimedia 拒
+- 国家队名是维基百科的英文写法：`France`, `Saudi Arabia`, `Bosnia and Herzegovina`
+- 2026 世界杯后此页面会更新为归档状态，建议同时记录 `revid` 用于追踪
+- 维基百科页面可能临时无法访问（Wikimedia 偶尔有事故），脚本需要加 retry
+
+## 10. openfootball / football.json（公开赛事赛果）
+
+### 概述
+`openfootball/football.json` 是公共领域（CC0）的足球赛事数据仓库，提供 2010 年至今的 20+ 联赛赛程和赛果。**无 API key，无 rate limit，纯 GitHub raw URL**。
+
+适合做**离线赛事 backup** 和**冷门联赛补全**（如奥地利、比利时、苏超、土超、希超、葡超、荷甲——这些 500.com 和懂球帝不覆盖）。
+
+### 接入
+- **端点**: `https://raw.githubusercontent.com/openfootball/football.json/master/{season}/{code}.json`
+- **方法**: `GET`
+- **必要头**: 标准 User-Agent
+- **无需 API key**
+- **数据格式**: JSON
+
+### 联赛代码
+| 代码 | 联赛 |
+|------|------|
+| `en.1` | English Premier League |
+| `en.2` | English Championship |
+| `en.3` | English League One |
+| `en.4` | English League Two |
+| `de.1` | Deutsche Bundesliga |
+| `de.2` | 2. Bundesliga |
+| `es.1` | Spanish La Liga |
+| `es.2` | Spanish Segunda División |
+| `it.1` | Italian Serie A |
+| `it.2` | Italian Serie B |
+| `fr.1` | French Ligue 1 |
+| `fr.2` | French Ligue 2 |
+| `at.1` | Austrian Bundesliga |
+| `be.1` | Belgian Jupiler Pro League |
+| `pt.1` | Portuguese Primeira Liga |
+| `sco.1` | Scottish Premiership |
+| `tr.1` | Turkish Süper Lig |
+| `gr.1` | Greek Super League |
+| `nl.1` | Dutch Eredivisie |
+
+### 数据格式
+```json
+{
+  "name": "English Premier League 2024/25",
+  "matches": [
+    {
+      "round": "Matchday 1",
+      "date": "2024-08-17",
+      "time": "12:30",
+      "team1": "Ipswich Town FC",
+      "team2": "Liverpool FC",
+      "score": { "ft": [0, 2] }
+    }
+  ]
+}
+```
+
+### 自动化脚本
+`scripts/fetch_openfootball.py`
+
+```bash
+# 列出已知联赛代码
+python3 scripts/fetch_openfootball.py --list-leagues
+
+# 列出仓库所有赛季
+python3 scripts/fetch_openfootball.py --list-seasons
+
+# 抓 EPL 2024/25 完整赛程
+python3 scripts/fetch_openfootball.py --league en.1 --season 2024-25
+
+# 抓 Liverpool 已完赛的比赛
+python3 scripts/fetch_openfootball.py --league en.1 --season 2024-25 --team Liverpool --played-only
+
+# JSON 输出
+python3 scripts/fetch_openfootball.py --league en.1 --season 2024-25 --team Liverpool --played-only --json
+```
+
+### 在 POWER-6 模型中的角色
+
+补 POWER-6 模型的「**历史交锋/状态趋势**」维度（10%）。当 500.com 数据不完整时（如冷门联赛），用 openfootball 作为兜底赛果来源。
+
+### 注意事项
+- URL 中联赛代码**必须包含 `.json` 后缀**，脚本里已自动加
+- 赛季是**起始年格式**：`2024-25` 是 24/25 赛季，`2025-26` 是 25/26 赛季
+- 已完赛的 `score` 字段是 dict（`{ft: [home, away], ht: [home, away]}`）或 list，未完赛是空 list `[]`
+- 球队名是**全名带 FC**（如 `Liverpool FC`），过滤时注意子串匹配
+- 仓库是 CC0 公共领域，可自由使用和分发
