@@ -396,7 +396,7 @@ cat report_data.json | python3 scripts/generate_report.py -f html -o report
     {比赛时间/气候/旅行等分析}
 
   ━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  加权总分：{XX}/100 → 推荐方向：让球{胜/平/负}（SP: {X.XX}）
+  📊 六维分析总结：{dims_summary}
   ⚠️ {风险提示，如有}
   ━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
