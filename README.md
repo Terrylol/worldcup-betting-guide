@@ -33,11 +33,11 @@
 
 ### 方式一：用 npx skills 安装（推荐）
 ```bash
-# Codex 用户
-npx skills install Terrylol/worldcup-betting-guide
+# 全局安装（所有 agent 可用：Codex / Claude Code / Cursor / ...）
+npx skills add Terrylol/worldcup-betting-guide -g
 
-# Claude Code 用户
-npx skills install Terrylol/worldcup-betting-guide --dir ~/.claude/skills
+# 当前项目专用
+npx skills add Terrylol/worldcup-betting-guide
 ```
 
 ### 方式二：手动安装
@@ -45,10 +45,10 @@ npx skills install Terrylol/worldcup-betting-guide --dir ~/.claude/skills
 git clone https://github.com/Terrylol/worldcup-betting-guide.git ~/.codex/skills/worldcup-betting-guide
 ```
 
-安装后重启 Codex / Claude Code，直接问：
+安装后重启 Agent，直接问：
 > "分析明天世界杯让球胜平负3串1，出 HTML 报告"
 
-兼容：**Codex** · **Claude Code** · **OpenClaw**
+**兼容 50+ 个 Agent 平台**：Codex · Claude Code · OpenClaw · Cursor · Trae · Trae CN · Zed · Windsurf · Continue · ...
 
 ---
 
