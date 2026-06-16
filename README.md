@@ -41,9 +41,8 @@ npx skills add Terrylol/worldcup-betting-guide
 ```
 
 ### 方式二：手动安装
-```bash
-git clone https://github.com/Terrylol/worldcup-betting-guide.git ~/.codex/skills/worldcup-betting-guide
-```
+
+克隆到你所用 Agent 的 skills 目录即可，通常在 `~/.codex/skills/` 或 `~/.claude/skills/`。
 
 安装后重启 Agent，直接问：
 > "分析明天世界杯让球胜平负3串1，出 HTML 报告"
