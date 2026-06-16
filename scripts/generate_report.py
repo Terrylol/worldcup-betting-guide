@@ -195,6 +195,14 @@ def render_match_cards(matches):
                          f'  </div>\n'
                          f'  <div class="dim-content">{d["desc"]}</div>\n'
                          f'</div>\n')
+        # 六维分析总结（如果有）
+        summary = ''
+        if m.get("dims_summary"):
+            summary = (f'  <div class="analysis-summary">\n'
+                       f'    <span class="summary-icon">📊</span>\n'
+                       f'    <span class="summary-text">{m["dims_summary"]}</span>\n'
+                       f'  </div>\n')
+        
         risk = f'<div class="risk-note">{m["risk"]}</div>' if m.get("risk") else ""
         cards.append(
             f'<div class="match-card">\n'
@@ -202,7 +210,7 @@ def render_match_cards(matches):
             f'    <span class="match-label">{m["id"]} {m["home"]} vs {m["away"]}</span>\n'
             f'    <span class="match-tag {tag_class(m["tag"])}">{m["tag"]}</span>\n'
             f'  </div>\n'
-            f'  <div class="match-card-body">\n{dims}  </div>\n'
+            f'  <div class="match-card-body">\n{dims}{summary}  </div>\n'
             f'  <div class="match-card-footer">\n'
             f'    <div>\n'
             f'      {risk}\n'
