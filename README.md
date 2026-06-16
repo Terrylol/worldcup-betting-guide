@@ -1,162 +1,119 @@
-# ⚽ WorldCup Betting Guide — 世界杯竞彩串关投注分析引擎
+<p align="center">
+  <img src="./assets/hero-banner.png" alt="WorldCup Betting Guide" width="100%">
+</p>
 
-> **⚠️ DISCLAIMER: This project is for entertainment and educational purposes only. It does NOT constitute betting advice. Gambling involves risk, please play responsibly. 本项目仅供娱乐和学习参考，不构成投注建议。**
+<p align="center">
+  <strong>「不是预测比赛，是解读机构的底牌」</strong>
+</p>
 
----
-
-## 🔥 这是什么？
-
-这是一个 **Agent Skill** —— 世界杯竞彩串关投注分析引擎。由 `SKILL.md`(给 LLM 读的流程定义)+ `scripts/`(数据采集脚本)+ `references/`(方法论手册)组成，需要 OpenClaw / Claude Code / Codex 这类 Agent 加载后使用。
-
-说人话：**帮你看穿庄...啊不，机构的底牌。**
-
-这不是一个普通的足球预测工具。这是一个**融合了机构级盘口解密、凯利指数量化分析、亚盘水位追踪、六维交叉验证引擎**的世界杯竞彩串关分析系统。
-
-市面上99%的足彩分析都是"我觉得法国能赢"——我们不一样。我们用数据说话：
-
-- 🎯 **凯利指数**：机构的风控指标，凯利最低项=机构最倾向的方向。这是机构自己暴露的底牌。
-- 📊 **隐含概率**：从欧赔反算出来的概率分布，初盘→即时的变化趋势=资金的实时投票。
-- 🏊 **亚盘水位**：升盘不升水=真看好，降盘不降水=诱上。盘口变动三原则，老手都懂。
-- 💰 **返还率差异**：竞彩88% vs 立博95%，7%的差距=竞彩在控制哪个方向的赔付利润。
-
-四个维度交叉验证，**方向一致→强力推荐；方向矛盾→警惕走盘/冷门**。不是拍脑袋，是读盘。
+<p align="center">
+  <a href="#license"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License"></a>
+  <a href="https://htmlpreview.github.io/?https://raw.githubusercontent.com/Terrylol/worldcup-betting-guide/main/docs/2026-06-18-rangqiu-report.html"><img src="https://img.shields.io/badge/Demo-Live%20Report-brightgreen" alt="Demo"></a>
+  <a href="https://github.com/Terrylol/worldcup-betting-guide"><img src="https://img.shields.io/badge/Platform-Codex%20%2F%20Claude%20Code-orange" alt="Platform"></a>
+  <img src="https://img.shields.io/badge/Python-3.9%2B-yellow" alt="Python">
+</p>
 
 ---
 
-## 🧠 POWER-6 六维分析模型
+## 👀 先看输出再说别的
 
-每场比赛从6个维度深度拆解，加权评分后输出推荐方向：
+这不是个命令行工具，这是一个 **Agent Skill**。把它加载进 Codex / Claude Code，说一句话就出报告：
 
-| 维度 | 权重(让球) | 一句话说明 |
-|------|-----------|-----------|
-| ⚔️ 战力鸿沟 | 15% | FIFA排名差+身价差，绝对实力地基 |
-| 🔋 状态引擎 | 15% | 近6场走势+胜率vs赢盘率背离检测 |
-| 🔐 **盘口密码** | **35%** | **核心维度：凯利+概率+亚盘+返还率四重交叉验证** |
-| 🤝 交锋心结 | 10% | 血脉压制/苦主效应/杯赛基因 |
-| ♟️ 阵容博弈 | 15% | 五大联赛人数+身价+核心球员+战术克制 |
-| 🌑 赛程暗线 | 10% | 体能/轮换/天气/赛程密度 |
+> "分析6月18日世界杯让球胜平负4串1，出 HTML 报告"
 
-**盘口密码占35%，是绝对核心。** 因为足彩的本质不是预测比赛结果，而是解读机构意图。
+<p align="center">
+  <img src="./assets/report-hero.png" alt="Report Preview" width="85%" style="border-radius: 12px; border: 1px solid rgba(255,255,255,0.08);">
+</p>
+
+**[👉 点击查看完整样例报告](https://htmlpreview.github.io/?https://raw.githubusercontent.com/Terrylol/worldcup-betting-guide/main/docs/2026-06-18-rangqiu-report.html)**
 
 ---
 
-## 🏗️ 系统架构
+## 🚀 30 秒上手
 
-```
-┌─────────────────────────────────────────────────┐
-│              WorldCup Betting Guide              │
-├─────────────────────────────────────────────────┤
-│                                                  │
-│  📡 数据采集层                                   │
-│  ├── 500.com 竞彩页 → 赛事列表 + SP赔率          │
-│  ├── 500.com 数据页 → 战绩/排名/心水/交锋         │
-│  ├── 500.com 亚盘页 → 盘口/水位变动              │
-│  ├── 500.com 欧赔页 → 凯利/概率/返还率           │
-│  └── 懂球帝 API  → 阵容/身价/排名               │
-│                                                  │
-│  🧠 分析引擎层                                   │
-│  ├── POWER-6 六维模型 (加权评分)                  │
-│  ├── 凯利指数交叉验证 (机构底牌)                  │
-│  ├── 隐含概率趋势追踪 (资金流向)                  │
-│  ├── 亚盘升降盘解读 (机构态度)                    │
-│  └── 返还率差异分析 (利润密码)                    │
-│                                                  │
-│  📊 输出层                                       │
-│  ├── JSON 结构化数据 (Schema验证)                 │
-│  ├── HTML 暗色主题报告 (盘口密码专属高亮)         │
-│  └── 三档串关方案 (稳妥/价值/冷门)               │
-│                                                  │
-└─────────────────────────────────────────────────┘
+```bash
+# 1. 克隆到 skills 目录
+git clone https://github.com/Terrylol/worldcup-betting-guide.git ~/.codex/skills/worldcup-betting-guide
+
+# 2. 打开 Codex / Claude Code
+# 3. 直接问
+#   → "分析明天世界杯让球胜平负3串1，HTML报告"
 ```
 
-**设计哲学：脚本粗提取 + LLM精解析**
-
-- 脚本只做脏活：curl抓取 → HTML转纯文本 → 去导航噪音
-- LLM做精读：在全文中语义提取任何数据，不依赖关键词硬编码
-- 为什么不切分板块？因为关键词切分=硬编码，网站改措辞就断。LLM能在全文中找到数据，少一层预处理=少一个故障点。
+兼容：**Codex** · **Claude Code** · **OpenClaw**
 
 ---
 
-## 🚀 快速开始
+## 🧠 它怎么工作的？
 
-加载为 Skill 后，在 Agent 对话中直接说：
+<p align="center">
+  <img src="./assets/pipeline.png" alt="Pipeline" width="100%">
+</p>
 
-> "分析6月17日世界杯让球胜平负4串1，出 HTML 报告"
+### POWER-6 六维分析模型
 
-Agent 会自动执行：**参数确认 → 抓取赛事列表 → 抓取深度数据 → 抓取阵容 → POWER-6 六维分析 → 生成报告**。
+每场比赛从 6 个维度加权评分，盘口相关维度占 35% 绝对权重：
 
-### 作为 Agent Skill 使用
+| 维度 | 权重 | 说明 |
+|------|------|------|
+| ⚔️ 战力鸿沟 | 15% | FIFA排名 + 身价差 + 五大联赛人数 |
+| 🔋 状态引擎 | 15% | 近10场走势 + 胜率/赢盘率背离检测 |
+| **🔐 盘口密码** | **35%** | 凯利指数 × 4 + 隐含概率趋势 + 亚盘水位异动 + 返还率差异 |
+| 🤝 交锋心结 | 10% | 血脉压制 / 苦主效应 / 杯赛基因 |
+| ♟️ 阵容博弈 | 15% | 核心球员健康 + 战术克制 + 伤停 |
+| 🌑 赛程暗线 | 10% | 体能储备 + 轮换空间 + 开赛时间 |
 
-本 Skill 兼容主流 Agent 框架，加载方式：
+### 为什么是 "交叉验证"？
 
-| Agent | 加载方式 | 调用示例 |
-|-------|---------|---------|
-| **OpenClaw** | 放到 `~/.openclaw/skills/` 目录（多 agent 共享） | `分析 6 月 17 日世界杯让球 4 串 1` |
-| **Claude Code** | 放到 `~/.claude/skills/` 目录 | `帮我跑一下 worldcup-betting-guide 这个 skill，分析明天 4 场比赛` |
-| **Codex** | 放到 `~/.agents/skills/` 目录 | `帮我分析6月17日世界杯让球胜平负4串1` |
+市面上的分析都是"我觉得谁赢" — 我们不一样：
+- **凯利指数**：机构风控底牌，低于返还率 = 控制赔付方向
+- **隐含概率**：看初盘→即时的变化趋势，不是绝对值
+- **亚盘水位**：升盘不升水 = 真看好，降盘不降水 = 诱上
+- **返还率差异**：竞彩 88% vs 主流公司 95%，7% 的差额不是白给的
 
-**三种 Agent 加载路径殊途同归**：Agent 读取 `SKILL.md` → 按流程调用 `scripts/` 下脚本 → 用 LLM 能力做语义解析和六维分析 → 输出结构化报告。
+四个维度指向一致才给高分，方向矛盾就标冷门预警。
 
 ---
 
-## 📂 项目结构
+## 📊 输出什么？
+
+<p align="center">
+  <img src="./assets/report-parlay.png" alt="Parlay Preview" width="70%" style="border-radius: 12px; border: 1px solid rgba(255,255,255,0.08);">
+</p>
+
+**三档串关方案：**
+
+| 方案 | 策略 | 适用 |
+|------|------|------|
+| 🎯 稳妥 | 全选高置信度场次主方向 | 求稳，SP 8-25 |
+| 🔥 价值 | 1-2 场选赔率有价值的方向 | 兼顾收益，SP 25-80 |
+| 💎 冷门 | 至少 1 场选冷门方向 | 博高赔，SP 80+ |
+
+---
+
+## 📁 项目结构
 
 ```
 worldcup-betting-guide/
-├── SKILL.md                          # Skill入口（流程定义+约束）
+├── SKILL.md                          # Skill 入口定义（给 Agent 读的）
 ├── README.md                         # 你正在看的
+├── assets/                           # 可视化素材
 ├── agents/
-│   └── openai.yaml                   # Codex插件注册
+│   └── openai.yaml                   # Codex 插件注册
 ├── scripts/
-│   ├── fetch_matches.py              # 500.com赛事抓取
-│   ├── fetch_analysis.py             # 500.com分析页→纯文本
-│   ├── fetch_squad.py                # 懂球帝API阵容抓取
-│   └── generate_report.py            # JSON→HTML报告生成
+│   ├── fetch_matches.py              # 500.com 赛事 + SP 赔率
+│   ├── fetch_analysis.py             # 数据页 / 亚盘 / 欧赔 → 纯文本
+│   ├── fetch_squad.py                # 懂球帝阵容 / 身价 API
+│   ├── fetch_squad_wiki.py           # Wikipedia 大名单
+│   └── generate_report.py            # JSON Schema → HTML 报告
 ├── references/
-│   ├── analysis_methodology.md       # POWER-6方法论+凯利指数框架
+│   ├── analysis_methodology.md       # POWER-6 方法论文档
 │   ├── data_sources.md               # 数据源技术手册
-│   ├── squad_search.md               # 阵容数据获取手册
-│   └── report_template.html          # HTML报告模板（暗色主题）
+│   ├── squad_search.md               # 阵容数据获取指南
+│   └── report_template.html          # HTML 报告模板
 └── docs/
-    └── 2026-06-17-rangqiu-report.html  # 分析报告样例
+    └── 2026-06-18-rangqiu-report.html # 样例报告
 ```
-
----
-
-## 📋 分析报告样例
-
-[6月17日世界杯让球胜平负4串1分析报告](https://htmlpreview.github.io/?https://raw.githubusercontent.com/Terrylol/worldcup-betting-guide/main/docs/2026-06-17-rangqiu-report.html)
-
-四场分析概要：
-
-| 场次 | 对阵 | 让球 | 盘口核心信号 | 推荐 |
-|------|------|------|-------------|------|
-| 周二017 | 法国 vs 塞内加尔 | 主让1 | 平凯利0.84全场最低+降盘不降水 | **让球平** |
-| 周二018 | 伊拉克 vs 挪威 | 客让2 | 胜凯利0.64极低+升盘✅ | **让球负** |
-| 周二019 | 阿根廷 vs 阿尔及利亚 | 主让1 | 胜凯利0.87最低+盘口稳定 | **让球胜** |
-| 周二020 | 奥地利 vs 约旦 | 主让1 | 胜凯利0.87+升盘✅ | **让球胜** |
-
-法国那场最有意思：凯利说胜，概率说防平，亚盘说诱上——三重信号矛盾，让1球走盘概率最高。这就是交叉验证的价值，不是拍脑袋。
-
----
-
-## 🎓 方法论亮点
-
-### 凯利指数 — 机构的底牌
-
-凯利指数<返还率=机构控制该方向赔付=倾向该方向。这不是我发明的，这是博彩数学的基础。但大多数人只会看赔率高低，不会看凯利。我们直接从500.com欧赔页提取竞彩官方、澳门、威廉希尔、Bet365的即时凯利，多公司交叉验证。
-
-### 隐含概率 — 不是看绝对值，看变化
-
-胜率64%说明不了什么。但初盘→即时胜率降3.4%、平率升1.8%，说明机构在防平。**趋势比绝对值重要。**
-
-### 亚盘升降盘 — 老手的直觉，量化了
-
-"升盘不升水=真看好"——这句话每个老手都会说，但多少人真正去看水位是0.78→0.85还是0.78→0.72？我们直接给出初盘和即时盘的水位对比，信号一目了然。
-
-### 返还率差异 — 被忽视的利润信号
-
-竞彩返还率88.56%，立博95.20%，差了将近7%。这意味着什么？竞彩在主胜上留了更多利润空间=控制主胜赔付。这不是玄学，这是数学。
 
 ---
 
@@ -176,3 +133,9 @@ worldcup-betting-guide/
 ## 📜 License
 
 MIT
+
+---
+
+<p align="center">
+  <sub>Made with ❤️ for football nerds and stats lovers</sub>
+</p>

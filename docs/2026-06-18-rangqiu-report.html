@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⚽ 世界杯竞彩分析报告 | 2026-06-18</title>
+<style>
+  :root {
+    --bg: #0a0c10;
+    --card: #12151e;
+    --card-inner: #181c28;
+    --card-hover: #1e2336;
+    --border: #252a3e;
+    --border-light: #2f3550;
+    --text: #e8e9ed;
+    --text-dim: #6b7194;
+    --accent: #e8a820;
+    --accent-glow: rgba(232,168,32,0.25);
+    --accent-dim: rgba(232,168,32,0.08);
+    --green: #2dd4a0;
+    --green-dim: rgba(45,212,160,0.10);
+    --red: #f0544f;
+    --red-dim: rgba(240,84,79,0.10);
+    --blue: #4f8ff7;
+    --blue-dim: rgba(79,143,247,0.10);
+    --purple: #b06ef5;
+    --purple-dim: rgba(176,110,245,0.10);
+    --cyan: #22d3ee;
+    --cyan-dim: rgba(34,211,238,0.08);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    padding: 20px 16px;
+    max-width: 820px;
+    margin: 0 auto;
+  }
+
+  /* ─── Header ─── */
+  .header {
+    text-align: center;
+    padding: 40px 24px 32px;
+    background: linear-gradient(160deg, #12151e 0%, #1a1f35 50%, #12151e 100%);
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '';
+    position: absolute;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: radial-gradient(ellipse at 30% 20%, rgba(232,168,32,0.06) 0%, transparent 50%);
+    pointer-events: none;
+  }
+  .header .logo { font-size: 32px; margin-bottom: 8px; }
+  .header h1 { font-size: 20px; font-weight: 700; margin-bottom: 12px; letter-spacing: 0.5px; }
+  .header h1 span { color: var(--accent); }
+  .header .meta { color: var(--text-dim); font-size: 13px; letter-spacing: 1px; }
+  .header .meta span { margin: 0 10px; }
+  .header .divider {
+    width: 60px; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    margin: 14px auto 0;
+  }
+
+  /* ─── Section Title ─── */
+  .section-title {
+    font-size: 14px;
+    font-weight: 700;
+    padding: 10px 18px;
+    margin: 28px 0 14px;
+    background: var(--accent-dim);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+    color: var(--accent);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  /* ─── Match Table ─── */
+  .match-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--card);
+    border-radius: 14px;
+    overflow: hidden;
+    font-size: 13px;
+    border: 1px solid var(--border);
+  }
+  .match-table th {
+    background: var(--card-inner);
+    padding: 12px;
+    text-align: center;
+    color: var(--text-dim);
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+  .match-table td {
+    padding: 12px;
+    text-align: center;
+    border-top: 1px solid var(--border);
+  }
+  .match-table tr:hover td { background: var(--card-hover); }
+  .team-name { font-weight: 700; }
+  .vs { color: var(--text-dim); font-size: 11px; margin: 0 4px; }
+  .handicap {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  .handicap.positive { background: var(--green-dim); color: var(--green); border: 1px solid rgba(45,212,160,0.2); }
+  .handicap.negative { background: var(--red-dim); color: var(--red); border: 1px solid rgba(240,84,79,0.2); }
+  .sp-value { font-family: "SF Mono", "JetBrains Mono", "Fira Code", monospace; font-size: 12px; color: var(--text-dim); }
+
+  /* ─── Match Card ─── */
+  .match-card {
+    background: var(--card);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+  .match-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, var(--card-inner), var(--card));
+    border-bottom: 1px solid var(--border);
+  }
+  .match-card-header .match-label {
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 0.3px;
+  }
+  .match-card-header .match-tag {
+    font-size: 11px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  .tag-crush { background: var(--red-dim); color: var(--red); border: 1px solid rgba(240,84,79,0.25); }
+  .tag-suppress { background: rgba(249,115,22,0.10); color: #f97316; border: 1px solid rgba(249,115,22,0.25); }
+  .tag-advantage { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(232,168,32,0.25); }
+  .tag-close { background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(79,143,247,0.25); }
+  .tag-even { background: var(--purple-dim); color: var(--purple); border: 1px solid rgba(176,110,245,0.25); }
+
+  .match-card-body { padding: 20px; }
+
+  /* ─── Dim Row ─── */
+  .dim-row {
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(37,42,62,0.5);
+  }
+  .dim-row:last-child { border-bottom: none; }
+
+  .dim-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+  .dim-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-dim);
+    letter-spacing: 0.5px;
+  }
+  .dim-label .weight { font-size: 10px; color: var(--accent); margin-left: 6px; font-weight: 600; }
+  .dim-score {
+    font-weight: 800;
+    font-size: 14px;
+    padding: 2px 10px;
+    border-radius: 6px;
+  }
+  .score-high { color: var(--green); background: var(--green-dim); }
+  .score-mid { color: var(--accent); background: var(--accent-dim); }
+  .score-low { color: var(--red); background: var(--red-dim); }
+  .dim-content {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.8;
+  }
+
+  /* ─── 盘口密码 Special Style ─── */
+  .dim-row.is-handicap {
+    background: linear-gradient(135deg, var(--cyan-dim), var(--accent-dim));
+    margin: 4px -12px;
+    padding: 14px 16px;
+    border-radius: 10px;
+    border-bottom: none;
+  }
+  .dim-row.is-handicap .dim-label {
+    color: var(--cyan);
+    font-size: 14px;
+  }
+  .dim-row.is-handicap .dim-content {
+    color: var(--text);
+  }
+  /* 盘口子块 */
+  .hc-block {
+    margin: 6px 0;
+    padding: 8px 12px;
+    background: rgba(10,12,16,0.5);
+    border-radius: 8px;
+    border-left: 3px solid var(--cyan);
+    font-size: 12px;
+    line-height: 1.9;
+  }
+  .hc-block-title {
+    font-weight: 700;
+    color: var(--cyan);
+    font-size: 11px;
+    letter-spacing: 1px;
+    margin-bottom: 3px;
+    text-transform: uppercase;
+  }
+  .hc-block .signal-up { color: var(--green); font-weight: 700; }
+  .hc-block .signal-down { color: var(--red); font-weight: 700; }
+  .hc-block .signal-warn { color: var(--accent); font-weight: 700; }
+  .hc-block .signal-mute { color: var(--text-dim); }
+
+  /* ─── Footer ─── */
+  .match-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 20px;
+    background: linear-gradient(135deg, #0e1018, #141825);
+    border-top: 1px solid var(--border);
+  }
+  .recommendation {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .rec-direction {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--accent);
+    letter-spacing: 1px;
+  }
+  .rec-sp {
+    font-size: 12px;
+    padding: 3px 10px;
+    background: var(--accent-dim);
+    border: 1px solid rgba(232,168,32,0.2);
+    border-radius: 6px;
+    color: var(--accent);
+    font-weight: 700;
+    font-family: "SF Mono", "JetBrains Mono", monospace;
+  }
+  .total-score {
+    font-size: 22px;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+  }
+  .total-score .score-num { color: var(--accent); }
+  .total-score .score-max { color: var(--text-dim); font-size: 13px; font-weight: 400; }
+  .risk-note {
+    font-size: 12px;
+    color: var(--red);
+    margin-top: 6px;
+    padding-left: 2px;
+  }
+
+  /* ─── Parlay Cards ─── */
+  .parlay-card {
+    background: var(--card);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    padding: 24px;
+    margin-bottom: 16px;
+  }
+  .parlay-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .parlay-title { font-size: 16px; font-weight: 800; letter-spacing: 0.5px; }
+  .parlay-sp {
+    font-size: 24px;
+    font-weight: 900;
+    color: var(--accent);
+    font-family: "SF Mono", "JetBrains Mono", monospace;
+  }
+  .parlay-sp small { font-size: 11px; color: var(--text-dim); font-weight: 400; letter-spacing: 0; }
+  .parlay-items { margin-bottom: 14px; }
+  .parlay-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    border-radius: 10px;
+    margin-bottom: 5px;
+    font-size: 13px;
+  }
+  .parlay-item .item-match { font-weight: 500; }
+  .parlay-item .item-dir { font-weight: 800; color: var(--accent); }
+  .parlay-item .item-sp { color: var(--text-dim); font-size: 12px; font-family: "SF Mono", "JetBrains Mono", monospace; }
+  .parlay-logic {
+    font-size: 13px;
+    color: var(--text-dim);
+    padding: 12px 14px;
+    background: var(--card-inner);
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    line-height: 1.8;
+  }
+  .confidence { margin-top: 10px; }
+  .confidence .stars { color: var(--accent); letter-spacing: 3px; font-size: 14px; }
+
+  .parlay-safe .parlay-item { background: var(--green-dim); border: 1px solid rgba(45,212,160,0.1); }
+  .parlay-safe .parlay-title { color: var(--green); }
+  .parlay-value .parlay-item { background: var(--accent-dim); border: 1px solid rgba(232,168,32,0.1); }
+  .parlay-value .parlay-title { color: var(--accent); }
+  .parlay-dark .parlay-item { background: var(--purple-dim); border: 1px solid rgba(176,110,245,0.1); }
+  .parlay-dark .parlay-title { color: var(--purple); }
+
+  .footer {
+    text-align: center;
+    padding: 28px 16px;
+    color: var(--text-dim);
+    font-size: 11px;
+    letter-spacing: 0.5px;
+  }
+  .footer .sources { margin-bottom: 4px; }
+  .footer .disclaimer { color: var(--red); font-weight: 600; }
+
+  @media (max-width: 600px) {
+    body { padding: 8px; }
+    .match-card-header { flex-direction: column; gap: 8px; }
+    .dim-row { flex-direction: column; gap: 4px; }
+    .dim-label { width: auto; }
+    .dim-score { text-align: left; width: auto; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">⚽</div>
+  <h1>世界杯竞彩【<span>让球胜平负</span>】4串1</h1>
+  <div class="meta">
+    <span>2026-06-18</span>
+    <span>·</span>
+    <span>让球胜平负</span>
+    <span>·</span>
+    <span>4场</span>
+  </div>
+  <div class="divider"></div>
+</div>
+
+<div class="section-title">📊 赛事一览</div>
+<table class="match-table">
+  <thead>
+    <tr>
+      <th>编号</th>
+      <th>时间</th>
+      <th>对阵</th>
+      <th>让球</th>
+      <th>SP（胜/平/负）</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+  <td>周三021</td>
+  <td>01:00</td>
+  <td><span class="team-name">葡萄牙</span> <span class="vs">vs</span> <span class="team-name">刚果(金)</span></td>
+  <td><span class="handicap negative">主让2球</span></td>
+  <td><span class="sp-value">2.66 / 3.94 / 2.00</span></td>
+</tr>
+<tr>
+  <td>周三022</td>
+  <td>04:00</td>
+  <td><span class="team-name">英格兰</span> <span class="vs">vs</span> <span class="team-name">克罗地亚</span></td>
+  <td><span class="handicap negative">主让1球</span></td>
+  <td><span class="sp-value">2.84 / 3.20 / 2.15</span></td>
+</tr>
+<tr>
+  <td>周三023</td>
+  <td>07:00</td>
+  <td><span class="team-name">加纳</span> <span class="vs">vs</span> <span class="team-name">巴拿马</span></td>
+  <td><span class="handicap negative">主让1球</span></td>
+  <td><span class="sp-value">4.25 / 3.52 / 1.64</span></td>
+</tr>
+<tr>
+  <td>周三024</td>
+  <td>10:00</td>
+  <td><span class="team-name">乌兹别克</span> <span class="vs">vs</span> <span class="team-name">哥伦比亚</span></td>
+  <td><span class="handicap positive">主受让1球</span></td>
+  <td><span class="sp-value">3.20 / 3.44 / 1.90</span></td>
+</tr>
+  </tbody>
+</table>
+
+<div class="section-title">🔍 POWER-6 六维分析</div>
+
+<div class="match-card">
+  <div class="match-card-header">
+    <span class="match-label">周三021 葡萄牙 vs 刚果(金)</span>
+    <span class="match-tag tag-crush">碾压局</span>
+  </div>
+  <div class="match-card-body">
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">战力鸿沟<span class="weight">×15%</span></span>
+    <span class="dim-score score-high">9/10</span>
+  </div>
+  <div class="dim-content">FIFA排名5 vs 46，差41位S级碾压；葡萄牙五大联赛22人 vs 刚果13人，身价差距悬殊</div>
+</div>
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">状态引擎<span class="weight">×15%</span></span>
+    <span class="dim-score score-high">8/10</span>
+  </div>
+  <div class="dim-content">葡萄牙近10场7胜2平1负（胜率70%）⚡上升态，走势WLLWWWW；刚果5胜3平2负（胜率50%）🔄波动态；⚠️葡萄牙赢盘率仅30%与胜率严重背离</div>
+</div>
+<div class="dim-row is-handicap">
+  <div class="dim-header">
+    <span class="dim-label">盘口密码<span class="weight">×35%</span></span>
+    <span class="dim-score score-mid">6/10</span>
+  </div>
+  <div class="dim-content"></div>
+  <div class="hc-block"><div class="hc-block-title">凯利</div>竞彩让2球SP胜2.66/平3.94/负2.00，平负SP接近=让2球后刚果有抵抗空间；欧赔凯利三项均≈0.94方向模糊。</div>
+<div class="hc-block"><div class="hc-block-title">概率</div>欧赔即概率74.22%/17.03%/8.74%，初盘<span class="signal-warn">→</span>即时变化极小，机构未加大主胜力度。</div>
+<div class="hc-block"><div class="hc-block-title">亚盘</div>初盘一球半/两球(0.82/1.02)<span class="signal-warn">→</span>即时(0.92/0.92)，升水不升盘=上盘阻力增大。</div>
+<div class="hc-block"><div class="hc-block-title">返还率</div>竞彩88.52% vs 平均94.55%，偏低6%=控制赔付。让2球深度大，走盘概率不低</div>
+</div>
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">交锋心结<span class="weight">×10%</span></span>
+    <span class="dim-score score-mid">5/10</span>
+  </div>
+  <div class="dim-content">双方暂无交战历史，数据暂缺</div>
+</div>
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">阵容博弈<span class="weight">×15%</span></span>
+    <span class="dim-score score-high">8/10</span>
+  </div>
+  <div class="dim-content">葡萄牙⭐⭐⭐⭐⭐（EPL7+Ligue14+La Liga4+Serie A2，五大联赛22人，Dias/Bernardo/Leão领衔）vs 刚果⭐⭐⭐（Ligue15+EFPL5+La Liga3，Wan-Bissaka/Tuanzebe在列，五大联赛13人）</div>
+</div>
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">赛程暗线<span class="weight">×10%</span></span>
+    <span class="dim-score score-mid">7/10</span>
+  </div>
+  <div class="dim-content">K组首轮，休息≥5天体能充沛；凌晨1点开赛对欧洲球员友好</div>
+</div>
+  </div>
+  <div class="match-card-footer">
+    <div>
+      <div class="recommendation">
+        <span class="rec-direction">让球胜</span>
+        <span class="rec-sp">SP 2.66</span>
+      </div>
+      <div class="risk-note">⚠️ 葡萄牙友谊赛赢盘率仅30%远低于胜率70%，让2球走盘风险较大</div>
+    </div>
+    <div class="total-score">
+      <span class="score-num">71</span><span class="score-max">/100</span>
+    </div>
+  </div>
+</div>
+
+<div class="match-card">
+  <div class="match-card-header">
+    <span class="match-label">周三022 英格兰 vs 克罗地亚</span>
+    <span class="match-tag tag-close">接近局</span>
+  </div>
+  <div class="match-card-body">
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">战力鸿沟<span class="weight">×15%</span></span>
+    <span class="dim-score score-mid">5/10</span>
+  </div>
+  <div class="dim-content">FIFA排名4 vs 11，差7位C级接近；英格兰略优但差距不大，非碾压之势</div>
+</div>
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">状态引擎<span class="weight">×15%</span></span>
+    <span class="dim-score score-mid">6/10</span>
+  </div>
+  <div class="dim-content">英格兰近10场6胜2平2负（胜率60%）🔄波动态，友谊赛0:1负日本状态不稳；克罗地亚5胜3平2负（胜率50%）🔄波动态，近3场1胜2负📉下滑</div>
+</div>
+<div class="dim-row is-handicap">
+  <div class="dim-header">
+    <span class="dim-label">盘口密码<span class="weight">×35%</span></span>
+    <span class="dim-score score-mid">5/10</span>
+  </div>
+  <div class="dim-content"></div>
+  <div class="hc-block"><div class="hc-block-title">凯利</div>让1球SP胜2.84/平3.20/负2.15，负项2.15全场最低=机构最看好克罗地亚受让1球后拿分；欧赔凯利胜项0.94略低于返还率94.40%=轻微看主胜，与让球SP指向矛盾。</div>
+<div class="hc-block"><div class="hc-block-title">概率</div>欧赔主胜55.02%/平25.62%/负19.35%，主胜1.67<span class="signal-warn">→</span>1.72上升=市场在降英格兰热度。</div>
+<div class="hc-block"><div class="hc-block-title">亚盘</div>半球/一球(0.92/0.92)盘不动水不动=机构态度犹豫。</div>
+<div class="hc-block"><div class="hc-block-title">返还率</div>竞彩88.52% vs 平均94.40%，偏低6%。综合让1球后克罗地亚方向更受机构认可</div>
+</div>
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">交锋心结<span class="weight">×10%</span></span>
+    <span class="dim-score score-mid">7/10</span>
+  </div>
+  <div class="dim-content">英格兰6战4胜2平0负血脉压制，进13失4；但2018世界杯克罗地亚加时淘汰英格兰，大赛苦主效应犹存</div>
+</div>
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">阵容博弈<span class="weight">×15%</span></span>
+    <span class="dim-score score-mid">6/10</span>
+  </div>
+  <div class="dim-content">英格兰⭐⭐⭐⭐⭐（EPL21人+德甲2+西甲2，Rice/Stones/Guéhi领衔，阵容极厚）vs 克罗地亚⭐⭐⭐⭐（意甲7+德甲5+EPL3+西甲3，Gvardiol/Stanišić/Pongračić，中场大赛经验丰富）</div>
+</div>
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">赛程暗线<span class="weight">×10%</span></span>
+    <span class="dim-score score-mid">7/10</span>
+  </div>
+  <div class="dim-content">L组首轮，休息≥5天体能充沛；凌晨4点开赛对欧洲球员友好</div>
+</div>
+  </div>
+  <div class="match-card-footer">
+    <div>
+      <div class="recommendation">
+        <span class="rec-direction">让球负</span>
+        <span class="rec-sp">SP 2.15</span>
+      </div>
+      <div class="risk-note">⚠️ 交锋历史英格兰占优，克罗地亚大赛韧性强但让1球负方向需防走盘</div>
+    </div>
+    <div class="total-score">
+      <span class="score-num">57</span><span class="score-max">/100</span>
+    </div>
+  </div>
+</div>
+
+<div class="match-card">
+  <div class="match-card-header">
+    <span class="match-label">周三023 加纳 vs 巴拿马</span>
+    <span class="match-tag tag-close">反转局</span>
+  </div>
+  <div class="match-card-body">
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">战力鸿沟<span class="weight">×15%</span></span>
+    <span class="dim-score score-low">3/10</span>
+  </div>
+  <div class="dim-content">FIFA排名73 vs 34，巴拿马排名反而高39位！加纳让1球极为反常；但加纳五大联赛16人 vs 巴拿马仅1人，阵容层面加纳更强</div>
+</div>
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">状态引擎<span class="weight">×15%</span></span>
+    <span class="dim-score score-low">4/10</span>
+  </div>
+  <div class="dim-content">加纳近10场3胜2平5负（胜率30%）🥶冰封态，走势LDLLWL，友谊赛连败威尔士/墨西哥/德国；巴拿马4胜4平2负（胜率40%）🔄波动态，近5场不败</div>
+</div>
+<div class="dim-row is-handicap">
+  <div class="dim-header">
+    <span class="dim-label">盘口密码<span class="weight">×35%</span></span>
+    <span class="dim-score score-high">9/10</span>
+  </div>
+  <div class="dim-content"></div>
+  <div class="hc-block"><div class="hc-block-title">凯利</div>让1球SP胜4.25/平3.52/负1.64，负项1.64极低=机构强烈看好巴拿马受让方向！欧赔凯利即赔三项均≈0.94趋于均衡，但初赔负项1.02>返还率92.98%已修正。</div>
+<div class="hc-block"><div class="hc-block-title">概率</div>欧赔主胜1.95<span class="signal-warn">→</span>2.17大幅上升+11.3%，客胜3.69<span class="signal-warn">→</span>3.41下降=市场资金持续流向巴拿马方向。</div>
+<div class="hc-block"><div class="hc-block-title">亚盘</div>加纳仅让0.25球(亚盘)，竞彩却让1球=竞彩刻意深开盘口诱买加纳方向。</div>
+<div class="hc-block"><div class="hc-block-title">返还率</div>竞彩88.56% vs 平均94.36%，偏低6%在控制赔付。<span class="signal-down">⚠️</span>让球设置与排名严重矛盾，深开盘口疑为诱盘</div>
+</div>
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">交锋心结<span class="weight">×10%</span></span>
+    <span class="dim-score score-mid">5/10</span>
+  </div>
+  <div class="dim-content">双方暂无交战历史，数据暂缺</div>
+</div>
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">阵容博弈<span class="weight">×15%</span></span>
+    <span class="dim-score score-mid">6/10</span>
+  </div>
+  <div class="dim-content">加纳⭐⭐⭐（Ligue17+EFPL4+La Liga4，Partey/Seidu领衔，五大联赛16人）vs 巴拿马⭐⭐（EPL仅Córdoba1人，其余均非五大联赛）；加纳阵容纸面更强但近况极差</div>
+</div>
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">赛程暗线<span class="weight">×10%</span></span>
+    <span class="dim-score score-mid">6/10</span>
+  </div>
+  <div class="dim-content">L组首轮，早上7点开赛，美洲球员适应度稍好</div>
+</div>
+  </div>
+  <div class="match-card-footer">
+    <div>
+      <div class="recommendation">
+        <span class="rec-direction">让球负</span>
+        <span class="rec-sp">SP 1.64</span>
+      </div>
+      <div class="risk-note">⚠️ 加纳FIFA排名73远低于巴拿马34却让1球，让球设置反常；竞彩深开盘口疑为诱盘，巴拿马受让1球方向需防走盘</div>
+    </div>
+    <div class="total-score">
+      <span class="score-num">62</span><span class="score-max">/100</span>
+    </div>
+  </div>
+</div>
+
+<div class="match-card">
+  <div class="match-card-header">
+    <span class="match-label">周三024 乌兹别克 vs 哥伦比亚</span>
+    <span class="match-tag tag-suppress">压制局</span>
+  </div>
+  <div class="match-card-body">
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">战力鸿沟<span class="weight">×15%</span></span>
+    <span class="dim-score score-high">8/10</span>
+  </div>
+  <div class="dim-content">FIFA排名50 vs 13，差37位A级压制；哥伦比亚明显实力占优，乌兹别克首次参加世界杯缺乏经验</div>
+</div>
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">状态引擎<span class="weight">×15%</span></span>
+    <span class="dim-score score-mid">6/10</span>
+  </div>
+  <div class="dim-content">乌兹别克近10场4胜3平3负（胜率40%）🔄波动态，友谊赛1:2负荷兰/0:2负加拿大；哥伦比亚5胜2平3负（胜率50%）🔄波动态，但近3场1胜2负📉下滑态</div>
+</div>
+<div class="dim-row is-handicap">
+  <div class="dim-header">
+    <span class="dim-label">盘口密码<span class="weight">×35%</span></span>
+    <span class="dim-score score-mid">7/10</span>
+  </div>
+  <div class="dim-content"></div>
+  <div class="hc-block"><div class="hc-block-title">凯利</div>让1球SP胜3.20/平3.44/负1.90，负项1.90较低=机构看好哥伦比亚打穿；欧赔凯利三项均≈0.94方向性不强。</div>
+<div class="hc-block"><div class="hc-block-title">概率</div>欧赔主胜8.58<span class="signal-warn">→</span>概率11.07%/客胜1.37<span class="signal-warn">→</span>概率68.57%，客胜绝对优势；初盘<span class="signal-warn">→</span>即时主胜7.78<span class="signal-warn">→</span>8.58大幅上升+10.3%=市场确认哥伦比亚方向。</div>
+<div class="hc-block"><div class="hc-block-title">亚盘</div>受一球/球半(1.25)偏深盘，哥伦比亚需赢2球才全赢盘。</div>
+<div class="hc-block"><div class="hc-block-title">返还率</div>竞彩88.53% vs 平均93.78%，偏低5%。欧赔和概率一致性高，哥伦比亚让1球赢方向可靠</div>
+</div>
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">交锋心结<span class="weight">×10%</span></span>
+    <span class="dim-score score-mid">5/10</span>
+  </div>
+  <div class="dim-content">双方暂无交战历史，数据暂缺</div>
+</div>
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">阵容博弈<span class="weight">×15%</span></span>
+    <span class="dim-score score-mid">7/10</span>
+  </div>
+  <div class="dim-content">乌兹别克⭐⭐（EPL仅Khusanov1人效力曼城，其余以本土联赛为主）vs 哥伦比亚⭐⭐⭐⭐（EPL2+Serie A2+La Liga3+Bundesliga1+Ligue1 1，五大联赛9人，Ospina/Muñoz/Lucumí领衔）</div>
+</div>
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">赛程暗线<span class="weight">×10%</span></span>
+    <span class="dim-score score-mid">6/10</span>
+  </div>
+  <div class="dim-content">K组首轮，上午10点开赛，亚洲时间对乌兹别克稍有利但非决定性因素</div>
+</div>
+  </div>
+  <div class="match-card-footer">
+    <div>
+      <div class="recommendation">
+        <span class="rec-direction">让球负</span>
+        <span class="rec-sp">SP 1.90</span>
+      </div>
+      <div class="risk-note">⚠️ 哥伦比亚友谊赛近3场1胜2负状态波动，让1球打穿需赢2球以上</div>
+    </div>
+    <div class="total-score">
+      <span class="score-num">67</span><span class="score-max">/100</span>
+    </div>
+  </div>
+</div>
+
+<div class="section-title">🎯 4串1方案</div>
+
+<div class="parlay-card parlay-safe">
+  <div class="parlay-header">
+    <span class="parlay-title">🎯 稳妥方案</span>
+    <span class="parlay-sp">17.82 <small>串关SP</small></span>
+  </div>
+  <div class="parlay-items">
+<div class="parlay-item">
+  <span class="item-match">葡萄牙 vs 刚果(金)</span>
+  <span class="item-dir">让球胜</span>
+  <span class="item-sp">2.66</span>
+</div>
+<div class="parlay-item">
+  <span class="item-match">英格兰 vs 克罗地亚</span>
+  <span class="item-dir">让球负</span>
+  <span class="item-sp">2.15</span>
+</div>
+<div class="parlay-item">
+  <span class="item-match">加纳 vs 巴拿马</span>
+  <span class="item-dir">让球负</span>
+  <span class="item-sp">1.64</span>
+</div>
+<div class="parlay-item">
+  <span class="item-match">乌兹别克 vs 哥伦比亚</span>
+  <span class="item-dir">让球负</span>
+  <span class="item-sp">1.90</span>
+</div>
+  </div>
+  <div class="parlay-logic">全选机构最看好的方向：葡萄牙实力碾压让2球胜虽风险大但基本面支撑；英格兰让1球后克罗地亚方向SP最低机构认可；加纳让1球负SP1.64极低为全场最稳方向；哥伦比亚让1球胜概率68.57%方向可靠。4场中3场选让球负，避免全选同一方向，逻辑互补。</div>
+  <div class="confidence">置信度：<span class="stars">⭐⭐⭐⭐</span></div>
+</div>
+
+<div class="parlay-card parlay-value">
+  <div class="parlay-header">
+    <span class="parlay-title">🔥 价值方案</span>
+    <span class="parlay-sp">26.39 <small>串关SP</small></span>
+  </div>
+  <div class="parlay-items">
+<div class="parlay-item">
+  <span class="item-match">葡萄牙 vs 刚果(金)</span>
+  <span class="item-dir">让球平</span>
+  <span class="item-sp">3.94</span>
+</div>
+<div class="parlay-item">
+  <span class="item-match">英格兰 vs 克罗地亚</span>
+  <span class="item-dir">让球负</span>
+  <span class="item-sp">2.15</span>
+</div>
+<div class="parlay-item">
+  <span class="item-match">加纳 vs 巴拿马</span>
+  <span class="item-dir">让球负</span>
+  <span class="item-sp">1.64</span>
+</div>
+<div class="parlay-item">
+  <span class="item-match">乌兹别克 vs 哥伦比亚</span>
+  <span class="item-dir">让球负</span>
+  <span class="item-sp">1.90</span>
+</div>
+  </div>
+  <div class="parlay-logic">葡萄牙让2球走盘概率不低（赢盘率30%+亚盘升水），让球平SP3.94赔率价值好；其余3场维持稳妥方案方向。葡萄牙让2球平=1球小胜，符合友谊赛出力不出全力的节奏。整体赔率26.39在价值区间内。</div>
+  <div class="confidence">置信度：<span class="stars">⭐⭐⭐</span></div>
+</div>
+
+<div class="parlay-card parlay-dark">
+  <div class="parlay-header">
+    <span class="parlay-title">💎 冷门方案</span>
+    <span class="parlay-sp">93.57 <small>串关SP</small></span>
+  </div>
+  <div class="parlay-items">
+<div class="parlay-item">
+  <span class="item-match">葡萄牙 vs 刚果(金)</span>
+  <span class="item-dir">让球负</span>
+  <span class="item-sp">2.00</span>
+</div>
+<div class="parlay-item">
+  <span class="item-match">英格兰 vs 克罗地亚</span>
+  <span class="item-dir">让球平</span>
+  <span class="item-sp">3.20</span>
+</div>
+<div class="parlay-item">
+  <span class="item-match">加纳 vs 巴拿马</span>
+  <span class="item-dir">让球胜</span>
+  <span class="item-sp">4.25</span>
+</div>
+<div class="parlay-item">
+  <span class="item-match">乌兹别克 vs 哥伦比亚</span>
+  <span class="item-dir">让球平</span>
+  <span class="item-sp">3.44</span>
+</div>
+  </div>
+  <div class="parlay-logic">全选走盘/反冷方向：葡萄牙让2球负=刚果偷分或仅小负，刚果五大联赛13人有实力抵抗；英格兰让1球平=1球小胜走盘，交锋历史英格兰占优但差距非碾压；加纳让1球胜=加纳赢2球+，五大联赛16人纸面实力碾压巴拿马；哥伦比亚让1球平=1球小胜走盘，友谊赛状态波动。博取4场走盘的极端场景，赔率93.57。</div>
+  <div class="confidence">置信度：<span class="stars">⭐⭐</span></div>
+</div>
+
+<div class="footer">
+  <div class="sources">📊 500.com竞彩 | 懂球帝API | 欧赔/亚盘分析页</div>
+  <div class="sources">📋 POWER-6六维模型 · 凯利指数 · 隐含概率</div>
+  <div class="disclaimer">⚠️ 以上分析仅供参考，不构成投注建议</div>
+</div>
+
+</body>
+</html>
