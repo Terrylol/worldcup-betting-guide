@@ -1,0 +1,20 @@
+{
+  "name": "worldcup-betting-guide",
+  "version": "1.1.0",
+  "description": "世界杯竞彩串关投注分析引擎 · POWER-6 六维模型 · 凯利指数交叉验证 · 亚盘水位追踪 · 暗色主题 HTML 报告",
+  "author": "Terrylol",
+  "repository": "https://github.com/Terrylol/worldcup-betting-guide",
+  "homepage": "https://github.com/Terrylol/worldcup-betting-guide",
+  "license": "MIT",
+  "keywords": [
+    "worldcup",
+    "betting",
+    "football",
+    "sports-analytics",
+    "kelly-criterion",
+    "codex-skill",
+    "claude-code-skill",
+    "agent-skill"
+  ],
+  "compatible": ["codex", "claude-code", "openclaw"]
+}

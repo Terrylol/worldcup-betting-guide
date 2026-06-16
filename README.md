@@ -31,14 +31,22 @@
 
 ## 🚀 30 秒上手
 
+### 方式一：用 npx skills 安装（推荐）
 ```bash
-# 1. 克隆到 skills 目录
-git clone https://github.com/Terrylol/worldcup-betting-guide.git ~/.codex/skills/worldcup-betting-guide
+# Codex 用户
+npx skills install Terrylol/worldcup-betting-guide
 
-# 2. 打开 Codex / Claude Code
-# 3. 直接问
-#   → "分析明天世界杯让球胜平负3串1，HTML报告"
+# Claude Code 用户
+npx skills install Terrylol/worldcup-betting-guide --dir ~/.claude/skills
 ```
+
+### 方式二：手动安装
+```bash
+git clone https://github.com/Terrylol/worldcup-betting-guide.git ~/.codex/skills/worldcup-betting-guide
+```
+
+安装后重启 Codex / Claude Code，直接问：
+> "分析明天世界杯让球胜平负3串1，出 HTML 报告"
 
 兼容：**Codex** · **Claude Code** · **OpenClaw**
 
