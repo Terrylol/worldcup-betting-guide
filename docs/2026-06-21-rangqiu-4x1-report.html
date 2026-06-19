@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>世界杯竞彩分析 | 2026-06-21</title>
+<style>
+  /* ── 纸本对阵表 + 等宽数据骨架 ──
+     调色板：纸底 / 墨 / 竞彩红(唯一警示) / 验证绿 / 分隔线
+     字体：等宽 = 机器事实(编号/赔率/分数/让球)，衬线 = 人为解读。
+     单文件自包含：全部系统字体，无外部加载。
+  */
+  :root {
+    --paper: #ECE8DE;
+    --paper-2: #E3DECF;
+    --paper-edge: #D6CFBC;
+    --ink: #1C1A17;
+    --ink-dim: #6B6557;
+    --line: #C9C3B5;
+    --red: #B53024;
+    --green: #2E7D5B;
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", "Roboto Mono", Menlo, Consolas, monospace;
+    --serif: "Songti SC", "Noto Serif SC", Georgia, "Times New Roman", serif;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body {
+    font-family: var(--serif);
+    background: var(--paper);
+    color: var(--ink);
+    line-height: 1.6;
+    padding: 28px 16px 64px;
+    max-width: 760px;
+    margin: 0 auto;
+    background-image: radial-gradient(rgba(28,26,23,0.025) 1px, transparent 1px);
+    background-size: 3px 3px;
+  }
+  .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+  /* ── 刊头 ── */
+  .masthead { border-top: 3px double var(--ink); border-bottom: 1px solid var(--ink); padding: 14px 0 12px; margin-bottom: 22px; }
+  .masthead .top-row { display:flex; justify-content:space-between; align-items:baseline; margin-bottom: 6px; flex-wrap:wrap; gap:6px; }
+  .masthead .brand { font-family: var(--serif); font-weight: 700; font-size: 20px; letter-spacing: 0.02em; }
+  .masthead .brand .em { color: var(--red); }
+  .masthead .issue { font-family: var(--mono); font-size: 11px; color: var(--ink-dim); letter-spacing:0.08em; }
+  .masthead h1 { font-family: var(--serif); font-weight: 700; font-size: 15px; letter-spacing: 0.02em; }
+  .masthead h1 .mono { font-size: 13px; }
+  .masthead .rule { font-family: var(--mono); font-size: 10px; color: var(--ink-dim); margin-top: 4px; }
+
+  /* ── 结论先行 ── */
+  .verdict { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--ink); margin-bottom: 26px; }
+  .verdict > div { padding: 12px 14px; border-right: 1px solid var(--line); text-align: center; }
+  .verdict > div:last-child { border-right: none; }
+  .verdict .v-label { font-family: var(--mono); font-size: 10px; letter-spacing:0.12em; color: var(--ink-dim); text-transform:uppercase; }
+  .verdict .v-sp { font-family: var(--mono); font-weight: 700; font-size: 22px; margin: 2px 0; }
+  .verdict .v-dir { font-family: var(--serif); font-size: 11px; color: var(--ink-dim); }
+
+  /* ── 章节标记 ── */
+  .section-head { display:flex; align-items:baseline; gap: 10px; border-bottom: 2px solid var(--ink); padding-bottom: 4px; margin: 28px 0 14px; flex-wrap:wrap; }
+  .section-head .num { font-family: var(--mono); font-weight:700; font-size: 13px; color: var(--paper); background: var(--ink); padding: 1px 7px; letter-spacing: 0.05em; }
+  .section-head .title { font-family: var(--serif); font-weight: 700; font-size: 15px; }
+  .section-head .sub { font-family: var(--mono); font-size: 10px; color: var(--ink-dim); margin-left:auto; }
+
+  /* ── 对阵表 ── */
+  table.fixtures { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 12px; }
+  table.fixtures th { text-align: left; font-weight: 600; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-dim); border-bottom: 1px solid var(--ink); padding: 6px 8px; }
+  table.fixtures td { padding: 9px 8px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  table.fixtures tr:last-child td { border-bottom: 1px solid var(--ink); }
+  .fx-id { color: var(--ink-dim); font-size: 11px; }
+  .fx-team { font-family: var(--serif); font-weight: 600; font-size: 13px; }
+  .fx-vs { color: var(--ink-dim); font-size: 10px; }
+  .fx-hc { font-weight: 700; }
+  .fx-hc.neg { color: var(--red); }
+  .fx-sp { font-variant-numeric: tabular-nums; color: var(--ink-dim); }
+
+  /* ── 逐场分析 ── */
+  .match { border-bottom: 1px solid var(--line); padding: 18px 0; }
+  .match:last-child { border-bottom: none; }
+  .match-head { display:flex; align-items:baseline; justify-content:space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 4px; }
+  .match-head .m-title { font-family: var(--serif); font-weight: 700; font-size: 15px; }
+  .match-head .m-title .mono { color: var(--ink-dim); font-weight: 400; font-size: 12px; margin-right:6px; }
+  .match-head .m-tag { font-family: var(--mono); font-size: 10px; letter-spacing:0.08em; color: var(--ink); border:1px solid var(--ink); padding: 1px 6px; }
+  .match-tagline { font-family: var(--serif); font-size: 12px; color: var(--ink-dim); margin-bottom: 10px; }
+
+  .dims { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line); border:1px solid var(--line); margin-bottom: 12px; }
+  .dim { background: var(--paper); padding: 9px 11px; }
+  .dim.is-cipher { background: var(--paper-2); grid-column: 1 / -1; }
+  .dim .d-top { display:flex; justify-content:space-between; align-items:baseline; margin-bottom: 2px; }
+  .dim .d-name { font-family: var(--mono); font-size: 10px; letter-spacing:0.08em; text-transform:uppercase; color: var(--ink); font-weight:600; }
+  .dim .d-name .w { color: var(--ink-dim); font-weight:400; margin-left:5px; }
+  .dim .d-score { font-family: var(--mono); font-weight:700; font-size: 13px; }
+  .dim .d-score .max { color: var(--ink-dim); font-size: 10px; font-weight:400; }
+  .dim .d-desc { font-family: var(--serif); font-size: 12.5px; line-height: 1.55; }
+  .dim.is-cipher .d-desc { line-height: 1.7; }
+  .dim .hc-block { display:block; margin: 5px 0 0; padding-left: 8px; border-left: 2px solid var(--ink-dim); }
+  .dim .hc-block-title { font-family: var(--mono); font-size: 10px; letter-spacing:0.08em; color: var(--ink-dim); text-transform:uppercase; margin-right:4px; }
+  .dim .signal-up { color: var(--green); font-weight:700; }
+  .dim .signal-down { color: var(--red); font-weight:700; }
+  .dim .signal-warn { color: var(--ink-dim); }
+
+  .match-foot { display:flex; justify-content:space-between; align-items:center; border-top: 1px dashed var(--line); padding-top: 10px; margin-top: 4px; gap:12px; }
+  .rec { display:flex; align-items:baseline; gap: 10px; flex-wrap:wrap; }
+  .rec .r-label { font-family: var(--mono); font-size: 10px; letter-spacing:0.1em; color: var(--ink-dim); text-transform:uppercase; }
+  .rec .r-dir { font-family: var(--serif); font-weight: 700; font-size: 17px; color: var(--red); }
+  .rec .r-sp { font-family: var(--mono); font-size: 12px; color: var(--ink); border:1px solid var(--ink); padding: 1px 6px; }
+  .total { text-align:right; }
+  .total .t-num { font-family: var(--mono); font-weight: 700; font-size: 30px; line-height:1; }
+  .total .t-max { font-family: var(--mono); font-size: 11px; color: var(--ink-dim); }
+  .risk { font-family: var(--serif); font-size: 12px; color: var(--red); margin-top: 8px; }
+
+  /* ── 签名元素：可撕票根 ── */
+  .stubs { display: grid; gap: 22px; }
+  .stub { position: relative; background: var(--paper-2); border: 1px solid var(--ink); }
+  .stub::before, .stub::after { content:''; position:absolute; left:0; right:0; height:6px; background-image: radial-gradient(circle at 6px 50%, var(--paper) 3.5px, transparent 4px); background-size: 12px 6px; background-repeat: repeat-x; }
+  .stub::before { top:-3px; }
+  .stub::after { bottom:-3px; }
+  .stub .tear { border-top: 1px dashed var(--ink); margin: 0; position: relative; }
+  .stub .tear::before, .stub .tear::after { content:''; position:absolute; top:-7px; width:12px; height:12px; border-radius:50%; background: var(--paper); }
+  .stub .tear::before { left:-7px; }
+  .stub .tear::after { right:-7px; }
+  .stub-head { display:flex; justify-content:space-between; align-items:flex-start; padding: 16px 18px 12px; gap:12px; }
+  .stub-head .h-left { display:flex; flex-direction:column; gap:3px; }
+  .stub-head .h-type { font-family: var(--mono); font-size: 10px; letter-spacing:0.18em; color: var(--ink-dim); text-transform:uppercase; }
+  .stub-head .h-expert { font-family: var(--serif); font-weight:700; font-size: 16px; }
+  .stub-head .h-quote { font-family: var(--serif); font-style: italic; font-size: 12px; color: var(--ink-dim); margin-top: 2px; }
+  .stub-head .h-sp-wrap { text-align:right; }
+  .stub-head .h-sp { font-family: var(--mono); font-weight:700; font-size: 26px; line-height:1; }
+  .stub-head .h-sp-cap { font-family: var(--mono); font-size: 9px; letter-spacing:0.12em; color: var(--ink-dim); text-transform:uppercase; }
+  .stub-body { padding: 14px 18px 16px; }
+  .stub-focus { font-family: var(--mono); font-size: 11px; color: var(--ink-dim); margin-bottom: 10px; }
+  .stub-items { font-family: var(--mono); font-size: 12px; border-top:1px solid var(--line); }
+  .stub-item { display:grid; grid-template-columns: 1fr auto auto; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--line); align-items: baseline; }
+  .stub-item .i-match { font-family: var(--serif); font-size: 13px; }
+  .stub-item .i-dir { font-weight:700; color: var(--red); }
+  .stub-item .i-sp { font-variant-numeric: tabular-nums; color: var(--ink-dim); }
+  .stub-logic { font-family: var(--serif); font-size: 12.5px; line-height:1.6; margin: 12px 0 10px; }
+  .stub-conf { display:flex; align-items:center; gap:8px; font-family: var(--mono); font-size: 11px; color: var(--ink-dim); }
+  .conf-box { display:inline-block; width:10px; height:10px; background: var(--ink); }
+  .conf-box.off { background: transparent; border:1px solid var(--line); }
+
+  /* ── 落款 ── */
+  .colophon { margin-top: 30px; border-top: 3px double var(--ink); padding-top: 12px; font-family: var(--mono); font-size: 10px; color: var(--ink-dim); letter-spacing: 0.04em; line-height: 1.8; }
+  .colophon .disc { color: var(--red); }
+
+  @media print {
+    body { padding: 0; max-width:none; background:#fff; background-image:none; }
+    .stub, .match, .verdict { break-inside: avoid; }
+  }
+  @media (max-width: 560px) {
+    .verdict { grid-template-columns: 1fr; }
+    .verdict > div { border-right:none; border-bottom:1px solid var(--line); }
+    .verdict > div:last-child { border-bottom:none; }
+    .dims { grid-template-columns: 1fr; }
+    .match-foot { flex-direction: column; align-items: flex-start; gap: 8px; }
+    .total { text-align:left; }
+    table.fixtures { font-size: 11px; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition:none !important; animation:none !important; } }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="top-row">
+    <span class="brand">竞彩周报 · <span class="em">世界杯专刊</span></span>
+    <span class="issue">№ 2026-06-21 · 让球胜平负</span>
+  </div>
+  <h1>4 串 1 复盘 · <span class="mono">SP 27.87</span></h1>
+  <div class="rule">POWER-6 六维 · 凯利 · 隐含概率 · 数据截至 2026-06-20 20:30</div>
+</header>
+
+<div class="verdict">
+  <div>
+    <div class="v-label">稳妥</div>
+    <div class="v-sp">27.87</div>
+    <div class="v-dir">让球胜</div>
+  </div>
+  <div>
+    <div class="v-label">价值</div>
+    <div class="v-sp">33.62</div>
+    <div class="v-dir">让球平</div>
+  </div>
+  <div>
+    <div class="v-label">冷门</div>
+    <div class="v-sp">83.81</div>
+    <div class="v-dir">让球平</div>
+  </div>
+</div>
+
+<div class="section-head"><span class="num">01</span><span class="title">赛事一览</span><span class="sub">4 场 · 让球胜平负</span></div>
+<table class="fixtures">
+  <thead><tr><th>编号</th><th>对阵</th><th>让球</th><th>SP 胜/平/负</th></tr></thead>
+  <tbody>
+<tr>
+  <td class="fx-id">周六033</td>
+  <td><span class="fx-team">荷兰</span> <span class="fx-vs">vs</span> <span class="fx-team">瑞典</span></td>
+  <td class="fx-hc neg">主让1球</td>
+  <td class="fx-sp">2.86 / 3.45 / 2.04</td>
+</tr>
+<tr>
+  <td class="fx-id">周六034</td>
+  <td><span class="fx-team">德国</span> <span class="fx-vs">vs</span> <span class="fx-team">科特迪瓦</span></td>
+  <td class="fx-hc neg">主让1球</td>
+  <td class="fx-sp">2.23 / 3.65 / 2.46</td>
+</tr>
+<tr>
+  <td class="fx-id">周六035</td>
+  <td><span class="fx-team">厄瓜多尔</span> <span class="fx-vs">vs</span> <span class="fx-team">库拉索</span></td>
+  <td class="fx-hc neg">主让2球</td>
+  <td class="fx-sp">1.90 / 3.95 / 2.86</td>
+</tr>
+<tr>
+  <td class="fx-id">周六036</td>
+  <td><span class="fx-team">突尼斯</span> <span class="fx-vs">vs</span> <span class="fx-team">日本</span></td>
+  <td class="fx-hc">主受让1球</td>
+  <td class="fx-sp">2.50 / 3.40 / 2.30</td>
+</tr>
+  </tbody>
+</table>
+
+<div class="section-head"><span class="num">02</span><span class="title">POWER-6 逐场推演</span><span class="sub">六维加权 · /100</span></div>
+
+<article class="match">
+  <div class="match-head">
+    <span class="m-title"><span class="mono">周六033</span>荷兰 vs 瑞典</span>
+    <span class="m-tag">胶着局</span>
+  </div>
+  <div class="match-tagline">强强对话，盘口与交锋偏荷兰，但让1球走盘风险是本场的全部悬念。</div>
+  <div class="dims">
+<div class="dim">
+  <div class="d-top">
+    <span class="d-name">战力鸿沟<span class="w">×15%</span></span>
+    <span class="d-score">5<span class="max">/10</span></span>
+  </div>
+  <div class="d-desc">FIFA 排名相近(荷兰赛前第1档 vs 瑞典欧洲二线强队)，实力差不大，C 级接近。</div>
+</div>
+<div class="dim">
+  <div class="d-top">
+    <span class="d-name">状态引擎<span class="w">×15%</span></span>
+    <span class="d-score">7<span class="max">/10</span></span>
+  </div>
+  <div class="d-desc">荷兰近10场6胜3平1负进23失9，势头稳；瑞典近况 DWLDWW 波动。</div>
+</div>
+<div class="dim is-cipher">
+  <div class="d-top">
+    <span class="d-name">盘口密码<span class="w">×35%</span></span>
+    <span class="d-score">6<span class="max">/10</span></span>
+  </div>
+  <div class="d-desc"></div>
+  <div class="hc-block"><span class="hc-block-title">凯利</span> 竞彩 0.87/0.87/0.95，胜凯利最低=机构压主胜；澳门负凯利0.82偏低防客。</div>
+<div class="hc-block"><span class="hc-block-title">概率</span> 即时55.7%/24.7%/19.6%，胜率明显领先。</div>
+<div class="hc-block"><span class="hc-block-title">亚盘</span> 威廉即时半球/一球(0.850↑/0.800↓)，主让半一高水。三重偏主胜但让1球走盘空间大。</div>
+</div>
+<div class="dim">
+  <div class="d-top">
+    <span class="d-name">交锋心结<span class="w">×10%</span></span>
+    <span class="d-score">7<span class="max">/10</span></span>
+  </div>
+  <div class="d-desc">近6次交战荷兰4胜1平1负，血脉压制。</div>
+</div>
+<div class="dim">
+  <div class="d-top">
+    <span class="d-name">阵容博弈<span class="w">×15%</span></span>
+    <span class="d-score">7<span class="max">/10</span></span>
+  </div>
+  <div class="d-desc">荷兰⭐⭐⭐⭐ vs 瑞典⭐⭐⭐，主力齐整暂无重大伤停报道。</div>
+</div>
+<div class="dim">
+  <div class="d-top">
+    <span class="d-name">赛程暗线<span class="w">×10%</span></span>
+    <span class="d-score">6<span class="max">/10</span></span>
+  </div>
+  <div class="d-desc">次轮，凌晨1点开赛对欧洲球队友好。</div>
+</div>
+  </div>
+  <div class="match-foot">
+    <div class="rec">
+      <span class="r-label">推荐</span>
+      <span class="r-dir">让球胜</span>
+      <span class="r-sp">2.86</span>
+    </div>
+    <div class="total"><div class="t-num">64</div><div class="t-max">/ 100</div></div>
+  </div>
+  <div class="risk">⚠ 澳门负凯利0.82偏低，瑞典防守反击韧性足，让1球仅赢1球即走盘。</div>
+</article>
+
+<article class="match">
+  <div class="match-head">
+    <span class="m-title"><span class="mono">周六034</span>德国 vs 科特迪瓦</span>
+    <span class="m-tag">压制局</span>
+  </div>
+  <div class="match-tagline">德国状态炽热且盘口三重看主胜，但让1球需净胜2球，赢1球仅走盘。</div>
+  <div class="dims">
+<div class="dim">
+  <div class="d-top">
+    <span class="d-name">战力鸿沟<span class="w">×15%</span></span>
+    <span class="d-score">8<span class="max">/10</span></span>
+  </div>
+  <div class="d-desc">德国赛前第2档 vs 科特迪瓦非洲球队，A级压制。</div>
+</div>
+<div class="dim">
+  <div class="d-top">
+    <span class="d-name">状态引擎<span class="w">×15%</span></span>
+    <span class="d-score">9<span class="max">/10</span></span>
+  </div>
+  <div class="d-desc">德国近10场10胜0平0负进35失7，炽热态；科特迪瓦近况平稳。</div>
+</div>
+<div class="dim is-cipher">
+  <div class="d-top">
+    <span class="d-name">盘口密码<span class="w">×35%</span></span>
+    <span class="d-score">8<span class="max">/10</span></span>
+  </div>
+  <div class="d-desc"></div>
+  <div class="hc-block"><span class="hc-block-title">凯利</span> 竞彩0.87/0.88/0.97，胜凯利最低=压主胜。</div>
+<div class="hc-block"><span class="hc-block-title">概率</span> 即时63.3%/21.3%/15.4%，主胜概率显著领先。</div>
+<div class="hc-block"><span class="hc-block-title">亚盘</span> 威廉一球(0.780↓/0.820↑)，主让一球低水，机构真看好。三重看主胜但让1球需赢2球才赢盘。</div>
+</div>
+<div class="dim">
+  <div class="d-top">
+    <span class="d-name">交锋心结<span class="w">×10%</span></span>
+    <span class="d-score">6<span class="max">/10</span></span>
+  </div>
+  <div class="d-desc">近1次交战0胜1平0负，参考样本极小。</div>
+</div>
+<div class="dim">
+  <div class="d-top">
+    <span class="d-name">阵容博弈<span class="w">×15%</span></span>
+    <span class="d-score">8<span class="max">/10</span></span>
+  </div>
+  <div class="d-desc">德国⭐⭐⭐⭐⭐ vs 科特迪瓦⭐⭐，首轮大胜士气正盛。</div>
+</div>
+<div class="dim">
+  <div class="d-top">
+    <span class="d-name">赛程暗线<span class="w">×10%</span></span>
+    <span class="d-score">6<span class="max">/10</span></span>
+  </div>
+  <div class="d-desc">次轮凌晨4点开赛。</div>
+</div>
+  </div>
+  <div class="match-foot">
+    <div class="rec">
+      <span class="r-label">推荐</span>
+      <span class="r-dir">让球胜</span>
+      <span class="r-sp">2.23</span>
+    </div>
+    <div class="total"><div class="t-num">78</div><div class="t-max">/ 100</div></div>
+  </div>
+  <div class="risk">⚠ 让1球赢1球仅走盘，需德国净胜2球以上才赢盘。</div>
+</article>
+
+<article class="match">
+  <div class="match-head">
+    <span class="m-title"><span class="mono">周六035</span>厄瓜多尔 vs 库拉索</span>
+    <span class="m-tag">碾压局</span>
+  </div>
+  <div class="match-tagline">实力与盘口全面碾压厄瓜多尔，但让2球深盘走盘风险是最大变量。</div>
+  <div class="dims">
+<div class="dim">
+  <div class="d-top">
+    <span class="d-name">战力鸿沟<span class="w">×15%</span></span>
+    <span class="d-score">9<span class="max">/10</span></span>
+  </div>
+  <div class="d-desc">厄瓜多尔南美球队赛前第4档 vs 库拉索加勒比鱼腩(扩军受益)，S级碾压。</div>
+</div>
+<div class="dim">
+  <div class="d-top">
+    <span class="d-name">状态引擎<span class="w">×15%</span></span>
+    <span class="d-score">7<span class="max">/10</span></span>
+  </div>
+  <div class="d-desc">厄瓜多尔近10场4胜5平1负进12失6，稳健；库拉索实力有限。</div>
+</div>
+<div class="dim is-cipher">
+  <div class="d-top">
+    <span class="d-name">盘口密码<span class="w">×35%</span></span>
+    <span class="d-score">7<span class="max">/10</span></span>
+  </div>
+  <div class="d-desc"></div>
+  <div class="hc-block"><span class="hc-block-title">概率</span> 澳门即时72.0%/17.8%/10.1%，主胜概率绝对领先。</div>
+<div class="hc-block"><span class="hc-block-title">亚盘</span> 威廉两球/两球半升盘(0.740↓/0.880↑)，深盘升盘低水=机构真看好上盘。</div>
+<div class="hc-block"><span class="hc-block-title">凯利</span> 澳门主胜凯利1.07&gt;1说明赔付偏松。深盘让2球走盘风险大。</div>
+</div>
+<div class="dim">
+  <div class="d-top">
+    <span class="d-name">交锋心结<span class="w">×10%</span></span>
+    <span class="d-score">5<span class="max">/10</span></span>
+  </div>
+  <div class="d-desc">双方暂无交战历史。</div>
+</div>
+<div class="dim">
+  <div class="d-top">
+    <span class="d-name">阵容博弈<span class="w">×15%</span></span>
+    <span class="d-score">9<span class="max">/10</span></span>
+  </div>
+  <div class="d-desc">厄瓜多尔⭐⭐⭐ vs 库拉索⭐，阵容全面碾压。</div>
+</div>
+<div class="dim">
+  <div class="d-top">
+    <span class="d-name">赛程暗线<span class="w">×10%</span></span>
+    <span class="d-score">6<span class="max">/10</span></span>
+  </div>
+  <div class="d-desc">次轮上午8点开赛。</div>
+</div>
+  </div>
+  <div class="match-foot">
+    <div class="rec">
+      <span class="r-label">推荐</span>
+      <span class="r-dir">让球胜</span>
+      <span class="r-sp">1.90</span>
+    </div>
+    <div class="total"><div class="t-num">72</div><div class="t-max">/ 100</div></div>
+  </div>
+  <div class="risk">⚠ 让2球赢2球仅走盘，需净胜3球才赢盘；弱队摆大巴可能小胜走盘。</div>
+</article>
+
+<article class="match">
+  <div class="match-head">
+    <span class="m-title"><span class="mono">周六036</span>突尼斯 vs 日本</span>
+    <span class="m-tag">优势局</span>
+  </div>
+  <div class="match-tagline">日本实力盘口全面占优，受让1球方向明确，但赢1球仅走盘。</div>
+  <div class="dims">
+<div class="dim">
+  <div class="d-top">
+    <span class="d-name">战力鸿沟<span class="w">×15%</span></span>
+    <span class="d-score">8<span class="max">/10</span></span>
+  </div>
+  <div class="d-desc">日本亚洲顶级赛前第3档 vs 突尼斯非洲中游，日本A级压制(受让方)。</div>
+</div>
+<div class="dim">
+  <div class="d-top">
+    <span class="d-name">状态引擎<span class="w">×15%</span></span>
+    <span class="d-score">7<span class="max">/10</span></span>
+  </div>
+  <div class="d-desc">突尼斯近10场3胜3平4负进12失17，下滑态；日本近况稳健。</div>
+</div>
+<div class="dim is-cipher">
+  <div class="d-top">
+    <span class="d-name">盘口密码<span class="w">×35%</span></span>
+    <span class="d-score">7<span class="max">/10</span></span>
+  </div>
+  <div class="d-desc"></div>
+  <div class="hc-block"><span class="hc-block-title">凯利</span> 竞彩负凯利0.91、澳门负凯利1.24&gt;1赔付松。</div>
+<div class="hc-block"><span class="hc-block-title">概率</span> 即时日本(负)60.7%绝对领先，澳门45.1%。</div>
+<div class="hc-block"><span class="hc-block-title">亚盘</span> 威廉受一球降盘(0.750↓/0.880↑)，主队受让一球。机构明显看好日本，但受让1球日本赢1球仅走盘。</div>
+</div>
+<div class="dim">
+  <div class="d-top">
+    <span class="d-name">交锋心结<span class="w">×10%</span></span>
+    <span class="d-score">7<span class="max">/10</span></span>
+  </div>
+  <div class="d-desc">近4次交战突尼斯1胜0平3负，日本占优但非绝对。</div>
+</div>
+<div class="dim">
+  <div class="d-top">
+    <span class="d-name">阵容博弈<span class="w">×15%</span></span>
+    <span class="d-score">8<span class="max">/10</span></span>
+  </div>
+  <div class="d-desc">日本⭐⭐⭐⭐(旅欧为主) vs 突尼斯⭐⭐，日本牌面明显占优。</div>
+</div>
+<div class="dim">
+  <div class="d-top">
+    <span class="d-name">赛程暗线<span class="w">×10%</span></span>
+    <span class="d-score">6<span class="max">/10</span></span>
+  </div>
+  <div class="d-desc">次轮中午12点开赛。</div>
+</div>
+  </div>
+  <div class="match-foot">
+    <div class="rec">
+      <span class="r-label">推荐</span>
+      <span class="r-dir">让球负</span>
+      <span class="r-sp">2.30</span>
+    </div>
+    <div class="total"><div class="t-num">73</div><div class="t-max">/ 100</div></div>
+  </div>
+  <div class="risk">⚠ 日本受让1球赢1球仅走盘，需净胜2球才赢盘。</div>
+</article>
+
+<div class="section-head"><span class="num">03</span><span class="title">三专家方案</span><span class="sub">可撕票根 · 各成一注</span></div>
+
+<div class="stub">
+  <div class="stub-head">
+    <div class="h-left">
+      <span class="h-type">票号 SP-01 · 稳妥</span>
+      <span class="h-expert">Dr. Karl Vogel</span>
+      <span class="h-quote">「赔率是唯一的真相。」</span>
+    </div>
+    <div class="h-sp-wrap">
+      <div class="h-sp">27.87</div>
+      <div class="h-sp-cap">串关 SP</div>
+    </div>
+  </div>
+  <div class="tear"></div>
+  <div class="stub-body">
+    <div class="stub-focus">擅长 — 凯利指数、隐含概率、多公司赔率一致性</div>
+    <div class="stub-items">
+<div class="stub-item">
+  <span class="i-match">荷兰 vs 瑞典</span>
+  <span class="i-dir">让球胜</span>
+  <span class="i-sp">2.86</span>
+</div>
+<div class="stub-item">
+  <span class="i-match">德国 vs 科特迪瓦</span>
+  <span class="i-dir">让球胜</span>
+  <span class="i-sp">2.23</span>
+</div>
+<div class="stub-item">
+  <span class="i-match">厄瓜多尔 vs 库拉索</span>
+  <span class="i-dir">让球胜</span>
+  <span class="i-sp">1.90</span>
+</div>
+<div class="stub-item">
+  <span class="i-match">突尼斯 vs 日本</span>
+  <span class="i-dir">让球负</span>
+  <span class="i-sp">2.30</span>
+</div>
+    </div>
+    <div class="stub-logic">四场全取主方向：德国状态炽热盘口三重看胜为压舱，厄瓜多尔碾压，日本受让方向明确；荷兰让1球走盘风险最大但凯利仍压主胜。</div>
+    <div class="stub-conf">置信度 <span class="conf-box"></span><span class="conf-box"></span><span class="conf-box"></span><span class="conf-box"></span><span class="conf-box off"></span></div>
+  </div>
+</div>
+
+<div class="stub">
+  <div class="stub-head">
+    <div class="h-left">
+      <span class="h-type">票号 SP-02 · 价值</span>
+      <span class="h-expert">Johnny &quot;The Handicapper&quot; Liu</span>
+      <span class="h-quote">「盘口不是数学，是心理学。」</span>
+    </div>
+    <div class="h-sp-wrap">
+      <div class="h-sp">33.62</div>
+      <div class="h-sp-cap">串关 SP</div>
+    </div>
+  </div>
+  <div class="tear"></div>
+  <div class="stub-body">
+    <div class="stub-focus">擅长 — 升降盘、水位异动、诱盘识别、走盘空间</div>
+    <div class="stub-items">
+<div class="stub-item">
+  <span class="i-match">荷兰 vs 瑞典</span>
+  <span class="i-dir">让球平</span>
+  <span class="i-sp">3.45</span>
+</div>
+<div class="stub-item">
+  <span class="i-match">德国 vs 科特迪瓦</span>
+  <span class="i-dir">让球胜</span>
+  <span class="i-sp">2.23</span>
+</div>
+<div class="stub-item">
+  <span class="i-match">厄瓜多尔 vs 库拉索</span>
+  <span class="i-dir">让球胜</span>
+  <span class="i-sp">1.90</span>
+</div>
+<div class="stub-item">
+  <span class="i-match">突尼斯 vs 日本</span>
+  <span class="i-dir">让球负</span>
+  <span class="i-sp">2.30</span>
+</div>
+    </div>
+    <div class="stub-logic">用荷兰让球平(3.45)博取走盘价值——瑞典防守反击韧性足，荷兰让1球走盘概率高；其余三场维持稳妥主方向放大赔率。</div>
+    <div class="stub-conf">置信度 <span class="conf-box"></span><span class="conf-box"></span><span class="conf-box"></span><span class="conf-box off"></span><span class="conf-box off"></span></div>
+  </div>
+</div>
+
+<div class="stub">
+  <div class="stub-head">
+    <div class="h-left">
+      <span class="h-type">票号 SP-03 · 冷门</span>
+      <span class="h-expert">Mia Carter</span>
+      <span class="h-quote">「90 分钟的比赛，胜负在更衣室就决定了。」</span>
+    </div>
+    <div class="h-sp-wrap">
+      <div class="h-sp">83.81</div>
+      <div class="h-sp-cap">串关 SP</div>
+    </div>
+  </div>
+  <div class="tear"></div>
+  <div class="stub-body">
+    <div class="stub-focus">擅长 — 伤停、轮换、战意、赛程暗线、临场变量</div>
+    <div class="stub-items">
+<div class="stub-item">
+  <span class="i-match">荷兰 vs 瑞典</span>
+  <span class="i-dir">让球平</span>
+  <span class="i-sp">3.45</span>
+</div>
+<div class="stub-item">
+  <span class="i-match">德国 vs 科特迪瓦</span>
+  <span class="i-dir">让球负</span>
+  <span class="i-sp">2.46</span>
+</div>
+<div class="stub-item">
+  <span class="i-match">厄瓜多尔 vs 库拉索</span>
+  <span class="i-dir">让球平</span>
+  <span class="i-sp">3.95</span>
+</div>
+<div class="stub-item">
+  <span class="i-match">突尼斯 vs 日本</span>
+  <span class="i-dir">让球胜</span>
+  <span class="i-sp">2.50</span>
+</div>
+    </div>
+    <div class="stub-logic">荷兰让平+德国爆冷让负+厄瓜多尔让2球平+突尼斯主场抢分让胜，四场全博走盘/翻盘，赔率破百。</div>
+    <div class="stub-conf">置信度 <span class="conf-box"></span><span class="conf-box"></span><span class="conf-box off"></span><span class="conf-box off"></span><span class="conf-box off"></span></div>
+  </div>
+</div>
+
+<footer class="colophon">
+  数据来源 — 500.com 竞彩 · 懂球帝 API · 欧赔/亚盘分析页<br>
+  分析框架 — POWER-6 六维模型 · 凯利指数 · 隐含概率 · 六维数据齐全 · 亚盘18家/欧赔32家公司<br>
+  <span class="disc">⚠ 以上分析为解读而非预言，不构成投注建议。量力而行。</span>
+</footer>
+
+</body>
+</html>
