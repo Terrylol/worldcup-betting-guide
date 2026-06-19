@@ -8,7 +8,7 @@
 
 <p align="center">
   <a href="#license"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License"></a>
-  <a href="https://htmlpreview.github.io/?https://raw.githubusercontent.com/Terrylol/worldcup-betting-guide/main/docs/2026-06-18-rangqiu-report.html"><img src="https://img.shields.io/badge/Demo-Live%20Report-brightgreen" alt="Demo"></a>
+  <a href="https://htmlpreview.github.io/?https://raw.githubusercontent.com/Terrylol/worldcup-betting-guide/main/docs/2026-06-19-rangqiu-report.html"><img src="https://img.shields.io/badge/Demo-Live%20Report-brightgreen" alt="Demo"></a>
   <a href="https://github.com/Terrylol/worldcup-betting-guide"><img src="https://img.shields.io/badge/Platform-Codex%20%2F%20Claude%20Code-orange" alt="Platform"></a>
   <img src="https://img.shields.io/badge/Python-3.9%2B-yellow" alt="Python">
 </p>
@@ -19,13 +19,13 @@
 
 这不是个命令行工具，这是一个 **Agent Skill**。把它加载进 Codex / Claude Code，说一句话就出报告：
 
-> "分析6月18日世界杯让球胜平负4串1，出 HTML 报告"
+> "分析6月19日世界杯让球胜平负4串1，出 HTML 报告"
 
 <p align="center">
   <img src="./assets/report-hero.png" alt="Report Preview" width="85%" style="border-radius: 12px; border: 1px solid rgba(255,255,255,0.08);">
 </p>
 
-**[👉 点击查看完整样例报告](https://htmlpreview.github.io/?https://raw.githubusercontent.com/Terrylol/worldcup-betting-guide/main/docs/2026-06-18-rangqiu-report.html)**
+**[👉 点击查看完整样例报告](https://htmlpreview.github.io/?https://raw.githubusercontent.com/Terrylol/worldcup-betting-guide/main/docs/2026-06-19-rangqiu-report.html)**
 
 ---
 
@@ -35,6 +35,10 @@
 ```bash
 # 全局安装（所有 agent 可用：Codex / Claude Code / Cursor / ...）
 npx skills add Terrylol/worldcup-betting-guide -g
+
+# 只安装到某个平台
+npx skills add Terrylol/worldcup-betting-guide -g --agent claude-code
+npx skills add Terrylol/worldcup-betting-guide -g --agent codex
 
 # 当前项目专用
 npx skills add Terrylol/worldcup-betting-guide
@@ -57,7 +61,9 @@ npx skills add Terrylol/worldcup-betting-guide
   <img src="./assets/pipeline.png" alt="Pipeline" width="100%">
 </p>
 
-### POWER-6 六维分析模型
+### POWER-6 六维分析模型 + 三专家决策层
+
+本项目分两层：**POWER-6** 负责逐场比赛的证据拆解与评分，**三专家体系** 负责把这些证据转化为不同风险偏好的串关方案。两者不冲突：前者回答“这场比赛有哪些信号”，后者回答“不同风格的人会怎么串”。
 
 每场比赛从 6 个维度加权评分，盘口相关维度占 35% 绝对权重：
 
@@ -79,6 +85,16 @@ npx skills add Terrylol/worldcup-betting-guide
 - **返还率差异**：竞彩 88% vs 主流公司 95%，7% 的差额不是白给的
 
 四个维度指向一致才给高分，方向矛盾就标冷门预警。
+
+### 三专家体系是什么？
+
+| 专家 | 风格 | 关注点 | 常见输出 |
+|------|------|--------|----------|
+| 🎓 量化派 | 保守 | 凯利指数、隐含概率、多公司赔率一致性 | 稳妥方案 |
+| 👴 盘口派 | 价值 | 亚盘升降、水位异动、诱盘/阻上 | 价值方案 |
+| 🕵️ 消息派 | 冷门 | 伤停、轮换、战意、赛程暗线 | 冷门方案 |
+
+最终报告会同时保留 POWER-6 的中立证据链，以及三专家的不同组合逻辑。
 
 ---
 
@@ -119,7 +135,9 @@ worldcup-betting-guide/
 │   ├── squad_search.md               # 阵容数据获取指南
 │   └── report_template.html          # HTML 报告模板
 └── docs/
-    └── 2026-06-18-rangqiu-report.html # 样例报告
+    ├── 2026-06-19-rangqiu-report.html              # 让球胜平负4串1样例
+    ├── 2026-06-19-rangqiu-2x1-report.html          # 让球胜平负2串1样例
+    └── 2026-06-19-shengpingfu-2x1-report.html      # 胜平负2串1样例
 ```
 
 ---

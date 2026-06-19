@@ -12,6 +12,7 @@ JSON数据 → HTML网页 + 文本报告，同源同构。
 """
 
 import argparse
+import html
 import json
 import os
 import sys
@@ -36,7 +37,8 @@ DATA_SCHEMA = """
       "sp": {"胜": 1.46, "平": 4.70, "负": 4.32},
       "tag": "碾压局",
       "dims": [
-        {"name": "战力鸿沟", "weight": "×20%", "desc": "...", "score": 9}
+        {"name": "战力鸿沟", "weight": "×15%", "desc": "...", "score": 9},
+        {"name": "盘口密码", "weight": "×35%", "desc": "【凯利】...【概率】...【亚盘】...【返还率】...", "score": 8}
       ],
       "recommendation": "让球胜",
       "rec_sp": 1.46,
@@ -78,15 +80,19 @@ def score_class(score):
 def tag_class(tag):
     return {"碾压局": "tag-crush", "压制局": "tag-suppress",
             "优势局": "tag-advantage", "胶着局": "tag-close",
-            "均势局": "tag-even"}.get(tag, "tag-close")
+            "均势局": "tag-even", "接近局": "tag-close",
+            "反转局": "tag-even"}.get(tag, "tag-close")
 
 def handicap_display(hc):
     if hc < 0: return f"主让{abs(hc)}球"
-    elif hc > 0: return f"客让{hc}球"
+    elif hc > 0: return f"主受让{hc}球"
     else: return "平手"
 
 def hc_html_class(hc):
     return "negative" if hc < 0 else "positive"
+
+def esc(value):
+    return html.escape(str(value), quote=True)
 
 
 def validate_data(data):
@@ -136,43 +142,37 @@ def render_match_table(matches):
         sp_str = f'{sp["胜"]:.2f} / {sp["平"]:.2f} / {sp["负"]:.2f}'
         rows.append(
             f'<tr>\n'
-            f'  <td>{m["id"]}</td>\n'
-            f'  <td>{m["time"]}</td>\n'
-            f'  <td><span class="team-name">{m["home"]}</span> '
+            f'  <td>{esc(m["id"])}</td>\n'
+            f'  <td>{esc(m["time"])}</td>\n'
+            f'  <td><span class="team-name">{esc(m["home"])}</span> '
             f'<span class="vs">vs</span> '
-            f'<span class="team-name">{m["away"]}</span></td>\n'
-            f'  <td><span class="handicap {hc_html_class(hc)}">{hc_text}</span></td>\n'
+            f'<span class="team-name">{esc(m["away"])}</span></td>\n'
+            f'  <td><span class="handicap {hc_html_class(hc)}">{esc(hc_text)}</span></td>\n'
             f'  <td><span class="sp-value">{sp_str}</span></td>\n'
             f'</tr>')
     return "\n".join(rows)
 
 def _render_handicap_dim(d):
     """盘口密码维度：独立渲染，带子块高亮"""
-    desc = d["desc"]
-    # Parse 【凯利】【概率】【亚盘】【返还率】 blocks
+    desc = esc(d["desc"])
     blocks = ""
     sections = desc.split("【")
-    for s in sections[1:]:  # skip before first 【
-        if "】" not in s:
+    for section in sections[1:]:
+        if "】" not in section:
             continue
-        title_end = s.index("】")
-        title = s[:title_end]
-        body = s[title_end+1:].strip()
-        # Clean up trailing space before next 【
-        if body.endswith(" "):
-            body = body.rstrip()
-        # Highlight signals in body
+        title_end = section.index("】")
+        title = section[:title_end]
+        body = section[title_end + 1:].strip()
         body = body.replace("✅", '<span class="signal-up">✅</span>')
         body = body.replace("⚠️", '<span class="signal-down">⚠️</span>')
         body = body.replace("→", '<span class="signal-warn">→</span>')
         blocks += f'<div class="hc-block"><div class="hc-block-title">{title}</div>{body}</div>\n'
-    
-    # Any text before first 【
+
     preamble = sections[0].strip() if sections[0].strip() else ""
-    
+
     return (f'<div class="dim-row is-handicap">\n'
             f'  <div class="dim-header">\n'
-            f'    <span class="dim-label">{d["name"]}<span class="weight">{d["weight"]}</span></span>\n'
+            f'    <span class="dim-label">{esc(d["name"])}<span class="weight">{esc(d["weight"])}</span></span>\n'
             f'    <span class="dim-score {score_class(d["score"])}">{d["score"]}/10</span>\n'
             f'  </div>\n'
             f'  <div class="dim-content">{preamble}</div>\n'
@@ -190,25 +190,25 @@ def render_match_cards(matches):
             else:
                 dims += (f'<div class="dim-row">\n'
                          f'  <div class="dim-header">\n'
-                         f'    <span class="dim-label">{d["name"]}<span class="weight">{d["weight"]}</span></span>\n'
+                         f'    <span class="dim-label">{esc(d["name"])}<span class="weight">{esc(d["weight"])}</span></span>\n'
                          f'    <span class="dim-score {score_class(d["score"])}">{d["score"]}/10</span>\n'
                          f'  </div>\n'
-                         f'  <div class="dim-content">{d["desc"]}</div>\n'
+                         f'  <div class="dim-content">{esc(d["desc"])}</div>\n'
                          f'</div>\n')
         # 六维分析总结（如果有）
         summary = ''
         if m.get("dims_summary"):
             summary = (f'  <div class="analysis-summary">\n'
                        f'    <span class="summary-icon">📊</span>\n'
-                       f'    <span class="summary-text">{m["dims_summary"]}</span>\n'
+                       f'    <span class="summary-text">{esc(m["dims_summary"])}</span>\n'
                        f'  </div>\n')
         
-        risk = f'<div class="risk-note">{m["risk"]}</div>' if m.get("risk") else ""
+        risk = f'<div class="risk-note">{esc(m["risk"])}</div>' if m.get("risk") else ""
         cards.append(
             f'<div class="match-card">\n'
             f'  <div class="match-card-header">\n'
-            f'    <span class="match-label">{m["id"]} {m["home"]} vs {m["away"]}</span>\n'
-            f'    <span class="match-tag {tag_class(m["tag"])}">{m["tag"]}</span>\n'
+            f'    <span class="match-label">{esc(m["id"])} {esc(m["home"])} vs {esc(m["away"])}</span>\n'
+            f'    <span class="match-tag {tag_class(m["tag"])}">{esc(m["tag"])}</span>\n'
             f'  </div>\n'
             f'  <div class="match-card-body">\n{dims}{summary}  </div>\n'
             f'  <div class="match-card-footer">\n'
@@ -228,19 +228,19 @@ def render_parlay_cards(parlays):
         items = ""
         for it in p["items"]:
             items += (f'<div class="parlay-item">\n'
-                      f'  <span class="item-match">{it["match"]}</span>\n'
-                      f'  <span class="item-dir">{it["direction"]}</span>\n'
+                      f'  <span class="item-match">{esc(it["match"])}</span>\n'
+                      f'  <span class="item-dir">{esc(it["direction"])}</span>\n'
                       f'  <span class="item-sp">{it["sp"]:.2f}</span>\n'
                       f'</div>\n')
         cards.append(
             f'<div class="parlay-card parlay-{p["type"]}">\n'
             f'  <div class="parlay-header">\n'
-            f'    <span class="parlay-title">{p["icon"]} {p["title"]}</span>\n'
+            f'    <span class="parlay-title">{esc(p["icon"])} {esc(p["title"])}</span>\n'
             f'    <span class="parlay-sp">{p["sp"]:.2f} <small>串关SP</small></span>\n'
             f'  </div>\n'
             f'  <div class="parlay-items">\n{items}  </div>\n'
-            f'  <div class="parlay-logic">{p["logic"]}</div>\n'
-            f'  <div class="confidence">置信度：<span class="stars">{p["stars"]}</span></div>\n'
+            f'  <div class="parlay-logic">{esc(p["logic"])}</div>\n'
+            f'  <div class="confidence">置信度：<span class="stars">{esc(p["stars"])}</span></div>\n'
             f'</div>')
     return "\n\n".join(cards)
 
@@ -252,9 +252,9 @@ def generate_html(data, template_path=TEMPLATE_PATH):
         sys.exit(1)
     with open(template_path, "r", encoding="utf-8") as f:
         tpl = f.read()
-    tpl = tpl.replace("{{date}}", data["date"])
+    tpl = tpl.replace("{{date}}", esc(data["date"]))
     tpl = tpl.replace("{{handicap_header}}", "让球" if data["play_type"] == "让球胜平负" else "实力差")
-    tpl = tpl.replace("{{play_type}}", data["play_type"])
+    tpl = tpl.replace("{{play_type}}", esc(data["play_type"]))
     tpl = tpl.replace("{{parlay_num}}", str(data["parlay_num"]))
     tpl = tpl.replace("{{match_count}}", str(data["match_count"]))
     tpl = tpl.replace("{{match_table_rows}}", render_match_table(data["matches"]))
@@ -368,9 +368,9 @@ def _demo_data():
             {"id": "周一013", "time": "00:00", "home": "西班牙", "away": "佛得角",
              "handicap": -2, "sp": {"胜": 1.46, "平": 4.70, "负": 4.32}, "tag": "碾压局",
              "dims": [
-                 {"name": "战力鸿沟", "weight": "×20%", "desc": "FIFA排名2 vs 67，S级碾压", "score": 9},
-                 {"name": "状态引擎", "weight": "×20%", "desc": "西班牙⚡上升态；佛得角📉下滑态", "score": 9},
-                 {"name": "盘口密码", "weight": "×25%", "desc": "亚盘升盘低水偏上盘，⚠️赢盘率仅30%", "score": 6},
+                 {"name": "战力鸿沟", "weight": "×15%", "desc": "FIFA排名2 vs 67，S级碾压", "score": 9},
+                 {"name": "状态引擎", "weight": "×15%", "desc": "西班牙⚡上升态；佛得角📉下滑态", "score": 9},
+                 {"name": "盘口密码", "weight": "×35%", "desc": "亚盘升盘低水偏上盘，⚠️赢盘率仅30%", "score": 6},
                  {"name": "交锋心结", "weight": "×10%", "desc": "无历史包袱", "score": 7},
                  {"name": "阵容博弈", "weight": "×15%", "desc": "西班牙⭐⭐⭐⭐⭐ vs 佛得角⭐⭐", "score": 9},
                  {"name": "赛程暗线", "weight": "×10%", "desc": "首轮体能充沛", "score": 7},
@@ -380,9 +380,9 @@ def _demo_data():
             {"id": "周一014", "time": "03:00", "home": "比利时", "away": "埃及",
              "handicap": -1, "sp": {"胜": 2.35, "平": 3.42, "负": 2.43}, "tag": "压制局",
              "dims": [
-                 {"name": "战力鸿沟", "weight": "×20%", "desc": "FIFA排名9 vs 29，A级压制", "score": 7},
-                 {"name": "状态引擎", "weight": "×20%", "desc": "比利时🔄波动态；埃及⚡上升态", "score": 6},
-                 {"name": "盘口密码", "weight": "×25%", "desc": "一球升盘高水，SP分布均匀分歧大", "score": 6},
+                 {"name": "战力鸿沟", "weight": "×15%", "desc": "FIFA排名9 vs 29，A级压制", "score": 7},
+                 {"name": "状态引擎", "weight": "×15%", "desc": "比利时🔄波动态；埃及⚡上升态", "score": 6},
+                 {"name": "盘口密码", "weight": "×35%", "desc": "一球升盘高水，SP分布均匀分歧大", "score": 6},
                  {"name": "交锋心结", "weight": "×10%", "desc": "无历史包袱", "score": 6},
                  {"name": "阵容博弈", "weight": "×15%", "desc": "比利时⭐⭐⭐⭐ vs 埃及⭐⭐⭐", "score": 6},
                  {"name": "赛程暗线", "weight": "×10%", "desc": "首轮体能充沛", "score": 7},
@@ -392,9 +392,9 @@ def _demo_data():
             {"id": "周一015", "time": "06:00", "home": "沙特阿拉伯", "away": "乌拉圭",
              "handicap": 1, "sp": {"胜": 2.83, "平": 3.10, "负": 2.21}, "tag": "优势局",
              "dims": [
-                 {"name": "战力鸿沟", "weight": "×20%", "desc": "FIFA排名61 vs 16，乌拉圭A级压制", "score": 8},
-                 {"name": "状态引擎", "weight": "×20%", "desc": "沙特📉下滑态；乌拉圭稳健", "score": 8},
-                 {"name": "盘口密码", "weight": "×25%", "desc": "受一球降盘水位下行，方向未变", "score": 7},
+                 {"name": "战力鸿沟", "weight": "×15%", "desc": "FIFA排名61 vs 16，乌拉圭A级压制", "score": 8},
+                 {"name": "状态引擎", "weight": "×15%", "desc": "沙特📉下滑态；乌拉圭稳健", "score": 8},
+                 {"name": "盘口密码", "weight": "×35%", "desc": "受一球降盘水位下行，方向未变", "score": 7},
                  {"name": "交锋心结", "weight": "×10%", "desc": "沙特对南美球队心理劣势", "score": 8},
                  {"name": "阵容博弈", "weight": "×15%", "desc": "沙特⭐⭐ vs 乌拉圭⭐⭐⭐⭐", "score": 8},
                  {"name": "赛程暗线", "weight": "×10%", "desc": "首轮体能充沛", "score": 7},
@@ -403,9 +403,9 @@ def _demo_data():
             {"id": "周一016", "time": "09:00", "home": "伊朗", "away": "新西兰",
              "handicap": -1, "sp": {"胜": 2.87, "平": 3.30, "负": 2.09}, "tag": "碾压局",
              "dims": [
-                 {"name": "战力鸿沟", "weight": "×20%", "desc": "FIFA排名20 vs 85，S级碾压", "score": 9},
-                 {"name": "状态引擎", "weight": "×20%", "desc": "伊朗⚡上升态；新西兰🥶冰封态", "score": 9},
-                 {"name": "盘口密码", "weight": "×25%", "desc": "半球/一球，让球胜2.87有吸引力", "score": 7},
+                 {"name": "战力鸿沟", "weight": "×15%", "desc": "FIFA排名20 vs 85，S级碾压", "score": 9},
+                 {"name": "状态引擎", "weight": "×15%", "desc": "伊朗⚡上升态；新西兰🥶冰封态", "score": 9},
+                 {"name": "盘口密码", "weight": "×35%", "desc": "半球/一球，让球胜2.87有吸引力", "score": 7},
                  {"name": "交锋心结", "weight": "×10%", "desc": "伊朗对大洋洲球队绝对心理优势", "score": 8},
                  {"name": "阵容博弈", "weight": "×15%", "desc": "伊朗⭐⭐⭐ vs 新西兰⭐", "score": 8},
                  {"name": "赛程暗线", "weight": "×10%", "desc": "首轮体能充沛", "score": 7},
