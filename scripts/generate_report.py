@@ -79,25 +79,30 @@ DATA_SCHEMA = """
 
 # ── 工具函数 ──
 
-def score_class(score):
-    return "score-high" if score >= 8 else ("score-mid" if score >= 5 else "score-low")
-
-def tag_class(tag):
-    return {"碾压局": "tag-crush", "压制局": "tag-suppress",
-            "优势局": "tag-advantage", "胶着局": "tag-close",
-            "均势局": "tag-even", "接近局": "tag-close",
-            "反转局": "tag-even"}.get(tag, "tag-close")
-
 def handicap_display(hc):
     if hc < 0: return f"主让{abs(hc)}球"
     elif hc > 0: return f"主受让{hc}球"
     else: return "平手"
 
-def hc_html_class(hc):
-    return "negative" if hc < 0 else "positive"
-
 def esc(value):
     return html.escape(str(value), quote=True)
+
+
+# 票号：稳妥/价值/冷门固定顺序
+STUB_SERIAL = {"safe": "SP-01", "value": "SP-02", "dark": "SP-03"}
+STUB_TYPE_LABEL = {"safe": "稳妥", "value": "价值", "dark": "冷门"}
+
+
+def confidence_boxes(stars_str):
+    """⭐⭐⭐⭐ → 4 个实心方块 + 1 个空心（满 5）。
+    stars 字符串里数 ⭐ 个数作为置信度，满格 5。
+    """
+    n = stars_str.count("⭐")
+    boxes = []
+    for i in range(5):
+        boxes.append('<span class="conf-box off"></span>' if i >= n
+                     else '<span class="conf-box"></span>')
+    return "".join(boxes)
 
 EXPERT_PRESETS = {
     "safe": {
@@ -163,32 +168,74 @@ def validate_data(data):
                 for key in ["match", "direction", "sp"]:
                     if key not in it:
                         errors.append(f"{prefix}.items[{j}] missing: {key}")
+        # 串关 SP 自洽校验：声明 SP 应 ≈ 各项 SP 连乘。
+        # 串关 SP 是纯算术，不该靠 LLM 手算；偏差 >5% 视为填错，拦截。
+        if "sp" in p and "items" in p and p["items"]:
+            product = 1.0
+            for it in p["items"]:
+                product *= float(it["sp"])
+            declared = float(p["sp"])
+            if product > 0 and abs(declared - product) / product > 0.05:
+                errors.append(
+                    f"{prefix}.sp={declared} 与各项连乘={product:.2f} 偏差>5%，"
+                    f"串关SP应为各项SP之积")
     return errors
 
 
 # ── HTML 渲染 ──
 
-def render_match_table(matches):
+def fixtures_header(play_type):
+    """对阵表表头：胜平负玩法无让球列（让球无意义），让球玩法有让球列。
+    表格列固定为：编号 / 对阵 / [让球] / SP，时间并入对阵信息由逐场卡承担。"""
+    if play_type == "胜平负":
+        return "<th>编号</th><th>对阵</th><th>SP 胜/平/负</th>"
+    return "<th>编号</th><th>对阵</th><th>让球</th><th>SP 胜/平/负</th>"
+
+
+def render_match_table(matches, play_type):
+    is_rangqiu = play_type == "让球胜平负"
     rows = []
     for m in matches:
-        hc = m.get("handicap", 0)
-        hc_text = m.get("handicap_display") or handicap_display(hc)
         sp = m["sp"]
         sp_str = f'{sp["胜"]:.2f} / {sp["平"]:.2f} / {sp["负"]:.2f}'
-        rows.append(
-            f'<tr>\n'
-            f'  <td>{esc(m["id"])}</td>\n'
-            f'  <td>{esc(m["time"])}</td>\n'
-            f'  <td><span class="team-name">{esc(m["home"])}</span> '
-            f'<span class="vs">vs</span> '
-            f'<span class="team-name">{esc(m["away"])}</span></td>\n'
-            f'  <td><span class="handicap {hc_html_class(hc)}">{esc(hc_text)}</span></td>\n'
-            f'  <td><span class="sp-value">{sp_str}</span></td>\n'
-            f'</tr>')
+        teams = (f'<span class="fx-team">{esc(m["home"])}</span> '
+                 f'<span class="fx-vs">vs</span> '
+                 f'<span class="fx-team">{esc(m["away"])}</span>')
+        if is_rangqiu:
+            hc = m.get("handicap", 0)
+            hc_text = m.get("handicap_display") or handicap_display(hc)
+            hc_cell = (f'<td class="fx-hc{" neg" if hc < 0 else ""}">'
+                       f'{esc(hc_text)}</td>')
+            rows.append(
+                f'<tr>\n'
+                f'  <td class="fx-id">{esc(m["id"])}</td>\n'
+                f'  <td>{teams}</td>\n'
+                f'  {hc_cell}\n'
+                f'  <td class="fx-sp">{sp_str}</td>\n'
+                f'</tr>')
+        else:
+            rows.append(
+                f'<tr>\n'
+                f'  <td class="fx-id">{esc(m["id"])}</td>\n'
+                f'  <td>{teams}</td>\n'
+                f'  <td class="fx-sp">{sp_str}</td>\n'
+                f'</tr>')
     return "\n".join(rows)
 
-def _render_handicap_dim(d):
-    """盘口密码维度：独立渲染，带子块高亮"""
+
+def render_dim_cell(d):
+    """单个维度格子（等宽记分牌式）。盘口密码由调用方单独处理占整行。"""
+    return (f'<div class="dim">\n'
+            f'  <div class="d-top">\n'
+            f'    <span class="d-name">{esc(d["name"])}<span class="w">{esc(d["weight"])}</span></span>\n'
+            f'    <span class="d-score">{d["score"]}<span class="max">/10</span></span>\n'
+            f'  </div>\n'
+            f'  <div class="d-desc">{esc(d["desc"])}</div>\n'
+            f'</div>\n')
+
+
+def render_cipher_dim(d):
+    """盘口密码维度：占整行，深一档底色，【】子块结构化高亮。"""
     desc = esc(d["desc"])
     blocks = ""
     sections = desc.split("【")
@@ -201,16 +248,15 @@ def _render_handicap_dim(d):
         body = body.replace("✅", '<span class="signal-up">✅</span>')
         body = body.replace("⚠️", '<span class="signal-down">⚠️</span>')
         body = body.replace("→", '<span class="signal-warn">→</span>')
-        blocks += f'<div class="hc-block"><div class="hc-block-title">{title}</div>{body}</div>\n'
-
-    preamble = sections[0].strip() if sections[0].strip() else ""
-
-    return (f'<div class="dim-row is-handicap">\n'
-            f'  <div class="dim-header">\n'
-            f'    <span class="dim-label">{esc(d["name"])}<span class="weight">{esc(d["weight"])}</span></span>\n'
-            f'    <span class="dim-score {score_class(d["score"])}">{d["score"]}/10</span>\n'
+        blocks += (f'<div class="hc-block"><span class="hc-block-title">'
+                   f'{title}</span> {body}</div>\n')
+    preamble = sections[0].strip()
+    return (f'<div class="dim is-cipher">\n'
+            f'  <div class="d-top">\n'
+            f'    <span class="d-name">{esc(d["name"])}<span class="w">{esc(d["weight"])}</span></span>\n'
+            f'    <span class="d-score">{d["score"]}<span class="max">/10</span></span>\n'
             f'  </div>\n'
-            f'  <div class="dim-content">{preamble}</div>\n'
+            f'  <div class="d-desc">{preamble}</div>\n'
             f'  {blocks}'
             f'</div>\n')
 
@@ -221,71 +267,88 @@ def render_match_cards(matches):
         dims = ""
         for d in m["dims"]:
             if d["name"] == "盘口密码":
-                dims += _render_handicap_dim(d)
+                dims += render_cipher_dim(d)
             else:
-                dims += (f'<div class="dim-row">\n'
-                         f'  <div class="dim-header">\n'
-                         f'    <span class="dim-label">{esc(d["name"])}<span class="weight">{esc(d["weight"])}</span></span>\n'
-                         f'    <span class="dim-score {score_class(d["score"])}">{d["score"]}/10</span>\n'
-                         f'  </div>\n'
-                         f'  <div class="dim-content">{esc(d["desc"])}</div>\n'
-                         f'</div>\n')
-        # 六维分析总结（如果有）
-        summary = ''
+                dims += render_dim_cell(d)
+        tagline = ""
         if m.get("dims_summary"):
-            summary = (f'  <div class="analysis-summary">\n'
-                       f'    <span class="summary-icon">📊</span>\n'
-                       f'    <span class="summary-text">{esc(m["dims_summary"])}</span>\n'
-                       f'  </div>\n')
-        
-        risk = f'<div class="risk-note">{esc(m["risk"])}</div>' if m.get("risk") else ""
+            tagline = f'<div class="match-tagline">{esc(m["dims_summary"])}</div>\n'
+        risk = f'<div class="risk">{esc(m["risk"])}</div>' if m.get("risk") else ""
         cards.append(
-            f'<div class="match-card">\n'
-            f'  <div class="match-card-header">\n'
-            f'    <span class="match-label">{esc(m["id"])} {esc(m["home"])} vs {esc(m["away"])}</span>\n'
-            f'    <span class="match-tag {tag_class(m["tag"])}">{esc(m["tag"])}</span>\n'
+            f'<article class="match">\n'
+            f'  <div class="match-head">\n'
+            f'    <span class="m-title"><span class="mono">{esc(m["id"])}</span>{esc(m["home"])} vs {esc(m["away"])}</span>\n'
+            f'    <span class="m-tag">{esc(m["tag"])}</span>\n'
             f'  </div>\n'
-            f'  <div class="match-card-body">\n{dims}{summary}  </div>\n'
-            f'  <div class="match-card-footer">\n'
-            f'    <div>\n'
-            f'      {risk}\n'
+            f'  {tagline}'
+            f'  <div class="dims">\n{dims}  </div>\n'
+            f'  <div class="match-foot">\n'
+            f'    <div class="rec">\n'
+            f'      <span class="r-label">推荐</span>\n'
+            f'      <span class="r-dir">{esc(m["recommendation"])}</span>\n'
+            f'      <span class="r-sp">{m["rec_sp"]:.2f}</span>\n'
             f'    </div>\n'
-            f'    <div class="total-score">\n'
-            f'      <span class="score-num">{m["total_score"]}</span><span class="score-max">/100</span>\n'
-            f'    </div>\n'
+            f'    <div class="total"><div class="t-num">{m["total_score"]}</div><div class="t-max">/ 100</div></div>\n'
             f'  </div>\n'
-            f'</div>')
+            f'  {risk}\n'
+            f'</article>')
     return "\n\n".join(cards)
 
 def render_parlay_cards(parlays):
     cards = []
     for p in parlays:
         meta = expert_meta(p)
+        ptype = p["type"]
         items = ""
         for it in p["items"]:
-            items += (f'<div class="parlay-item">\n'
-                      f'  <span class="item-match">{esc(it["match"])}</span>\n'
-                      f'  <span class="item-dir">{esc(it["direction"])}</span>\n'
-                      f'  <span class="item-sp">{it["sp"]:.2f}</span>\n'
+            items += (f'<div class="stub-item">\n'
+                      f'  <span class="i-match">{esc(it["match"])}</span>\n'
+                      f'  <span class="i-dir">{esc(it["direction"])}</span>\n'
+                      f'  <span class="i-sp">{it["sp"]:.2f}</span>\n'
                       f'</div>\n')
-        quote = f'<div class="expert-quote">「{esc(meta["quote"])}」</div>' if meta.get("quote") else ""
-        focus = f'<div class="expert-focus">擅长：{esc(meta["focus"])}</div>' if meta.get("focus") else ""
+        quote = (f'<span class="h-quote">「{esc(meta["quote"])}」</span>'
+                 if meta.get("quote") else "")
+        focus = (f'<div class="stub-focus">擅长 — {esc(meta["focus"])}</div>'
+                 if meta.get("focus") else "")
+        serial = STUB_SERIAL.get(ptype, "SP-00")
+        tlabel = STUB_TYPE_LABEL.get(ptype, "")
         cards.append(
-            f'<div class="parlay-card parlay-{p["type"]}">\n'
-            f'  <div class="parlay-header">\n'
-            f'    <div class="expert-head">\n'
-            f'      <span class="parlay-title">{esc(p["icon"])} {esc(meta["expert"])}</span>\n'
-            f'      <span class="expert-persona">{esc(meta["persona"])}</span>\n'
+            f'<div class="stub">\n'
+            f'  <div class="stub-head">\n'
+            f'    <div class="h-left">\n'
+            f'      <span class="h-type">票号 {serial} · {tlabel}</span>\n'
+            f'      <span class="h-expert">{esc(meta["expert"])}</span>\n'
+            f'      {quote}\n'
             f'    </div>\n'
-            f'    <span class="parlay-sp">{p["sp"]:.2f} <small>串关SP</small></span>\n'
+            f'    <div class="h-sp-wrap">\n'
+            f'      <div class="h-sp">{p["sp"]:.2f}</div>\n'
+            f'      <div class="h-sp-cap">串关 SP</div>\n'
+            f'    </div>\n'
             f'  </div>\n'
-            f'  {quote}\n'
-            f'  {focus}\n'
-            f'  <div class="parlay-items">\n{items}  </div>\n'
-            f'  <div class="parlay-logic">{esc(p["logic"])}</div>\n'
-            f'  <div class="confidence">置信度：<span class="stars">{esc(p["stars"])}</span></div>\n'
+            f'  <div class="tear"></div>\n'
+            f'  <div class="stub-body">\n'
+            f'    {focus}\n'
+            f'    <div class="stub-items">\n{items}    </div>\n'
+            f'    <div class="stub-logic">{esc(p["logic"])}</div>\n'
+            f'    <div class="stub-conf">置信度 {confidence_boxes(p.get("stars", ""))}</div>\n'
+            f'  </div>\n'
             f'</div>')
     return "\n\n".join(cards)
+
+
+def render_verdict(parlays):
+    """顶部三方案摘要：方案名 / SP / 首场方向作为最简线索。"""
+    cells = []
+    for p in parlays:
+        tlabel = STUB_TYPE_LABEL.get(p["type"], p.get("title", ""))
+        first_dir = p["items"][0]["direction"] if p.get("items") else ""
+        cells.append(
+            f'  <div>\n'
+            f'    <div class="v-label">{esc(tlabel)}</div>\n'
+            f'    <div class="v-sp">{p["sp"]:.2f}</div>\n'
+            f'    <div class="v-dir">{esc(first_dir)}</div>\n'
+            f'  </div>')
+    return "\n".join(cells)
 
 
 def generate_html(data, template_path=TEMPLATE_PATH):
@@ -296,14 +359,24 @@ def generate_html(data, template_path=TEMPLATE_PATH):
         sys.exit(1)
     with open(template_path, "r", encoding="utf-8") as f:
         tpl = f.read()
+    play_type = data["play_type"]
     tpl = tpl.replace("{{date}}", esc(data["date"]))
-    tpl = tpl.replace("{{handicap_header}}", "让球" if data["play_type"] == "让球胜平负" else "实力差")
-    tpl = tpl.replace("{{play_type}}", esc(data["play_type"]))
+    tpl = tpl.replace("{{play_type}}", esc(play_type))
     tpl = tpl.replace("{{parlay_num}}", str(data["parlay_num"]))
     tpl = tpl.replace("{{match_count}}", str(data["match_count"]))
-    tpl = tpl.replace("{{match_table_rows}}", render_match_table(data["matches"]))
+    tpl = tpl.replace("{{fixtures_header}}", fixtures_header(play_type))
+    tpl = tpl.replace("{{match_table_rows}}", render_match_table(data["matches"], play_type))
     tpl = tpl.replace("{{match_cards}}", render_match_cards(data["matches"]))
     tpl = tpl.replace("{{parlay_cards}}", render_parlay_cards(data["parlays"]))
+    tpl = tpl.replace("{{verdict}}", render_verdict(data["parlays"]))
+    # 刊头串关 SP：取稳妥方案（如有），作为整份报告的代表性赔率
+    safe_sp = next((p["sp"] for p in data["parlays"] if p["type"] == "safe"),
+                   data["parlays"][0]["sp"] if data["parlays"] else 0)
+    tpl = tpl.replace("{{verdict_sp}}", f"SP {safe_sp:.2f}")
+    tpl = tpl.replace("{{fetched_at}}",
+                      f" · 数据截至 {esc(data['fetched_at'])}" if data.get("fetched_at") else "")
+    tpl = tpl.replace("{{health_line}}",
+                      f" · {esc(data['health_line'])}" if data.get("health_line") else "")
     return tpl
 
 

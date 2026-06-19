@@ -3,441 +3,197 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>⚽ 世界杯竞彩分析报告 | {{date}}</title>
+<title>世界杯竞彩分析 | {{date}}</title>
 <style>
+  /* ── 纸本对阵表 + 等宽数据骨架 ──
+     调色板：纸底 / 墨 / 竞彩红(唯一警示) / 验证绿 / 分隔线
+     字体：等宽 = 机器事实(编号/赔率/分数/让球)，衬线 = 人为解读。
+     单文件自包含：全部系统字体，无外部加载。
+  */
   :root {
-    --bg: #0a0c10;
-    --card: #12151e;
-    --card-inner: #181c28;
-    --card-hover: #1e2336;
-    --border: #252a3e;
-    --border-light: #2f3550;
-    --text: #e8e9ed;
-    --text-dim: #6b7194;
-    --accent: #e8a820;
-    --accent-glow: rgba(232,168,32,0.25);
-    --accent-dim: rgba(232,168,32,0.08);
-    --green: #2dd4a0;
-    --green-dim: rgba(45,212,160,0.10);
-    --red: #f0544f;
-    --red-dim: rgba(240,84,79,0.10);
-    --blue: #4f8ff7;
-    --blue-dim: rgba(79,143,247,0.10);
-    --purple: #b06ef5;
-    --purple-dim: rgba(176,110,245,0.10);
-    --cyan: #22d3ee;
-    --cyan-dim: rgba(34,211,238,0.08);
+    --paper: #ECE8DE;
+    --paper-2: #E3DECF;
+    --paper-edge: #D6CFBC;
+    --ink: #1C1A17;
+    --ink-dim: #6B6557;
+    --line: #C9C3B5;
+    --red: #B53024;
+    --green: #2E7D5B;
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", "Roboto Mono", Menlo, Consolas, monospace;
+    --serif: "Songti SC", "Noto Serif SC", Georgia, "Times New Roman", serif;
   }
   * { margin:0; padding:0; box-sizing:border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    line-height: 1.7;
-    padding: 20px 16px;
-    max-width: 820px;
-    margin: 0 auto;
-  }
-
-  /* ─── Header ─── */
-  .header {
-    text-align: center;
-    padding: 40px 24px 32px;
-    background: linear-gradient(160deg, #12151e 0%, #1a1f35 50%, #12151e 100%);
-    border-radius: 20px;
-    border: 1px solid var(--border);
-    margin-bottom: 24px;
-    position: relative;
-    overflow: hidden;
-  }
-  .header::before {
-    content: '';
-    position: absolute;
-    top: -50%; left: -50%;
-    width: 200%; height: 200%;
-    background: radial-gradient(ellipse at 30% 20%, rgba(232,168,32,0.06) 0%, transparent 50%);
-    pointer-events: none;
-  }
-  .header .logo { font-size: 32px; margin-bottom: 8px; }
-  .header h1 { font-size: 20px; font-weight: 700; margin-bottom: 12px; letter-spacing: 0.5px; }
-  .header h1 span { color: var(--accent); }
-  .header .meta { color: var(--text-dim); font-size: 13px; letter-spacing: 1px; }
-  .header .meta span { margin: 0 10px; }
-  .header .divider {
-    width: 60px; height: 2px;
-    background: linear-gradient(90deg, transparent, var(--accent), transparent);
-    margin: 14px auto 0;
-  }
-
-  /* ─── Section Title ─── */
-  .section-title {
-    font-size: 14px;
-    font-weight: 700;
-    padding: 10px 18px;
-    margin: 28px 0 14px;
-    background: var(--accent-dim);
-    border-left: 3px solid var(--accent);
-    border-radius: 0 8px 8px 0;
-    color: var(--accent);
-    letter-spacing: 2px;
-    text-transform: uppercase;
-  }
-
-  /* ─── Match Table ─── */
-  .match-table {
-    width: 100%;
-    border-collapse: collapse;
-    background: var(--card);
-    border-radius: 14px;
-    overflow: hidden;
-    font-size: 13px;
-    border: 1px solid var(--border);
-  }
-  .match-table th {
-    background: var(--card-inner);
-    padding: 12px;
-    text-align: center;
-    color: var(--text-dim);
-    font-weight: 600;
-    font-size: 11px;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-  }
-  .match-table td {
-    padding: 12px;
-    text-align: center;
-    border-top: 1px solid var(--border);
-  }
-  .match-table tr:hover td { background: var(--card-hover); }
-  .team-name { font-weight: 700; }
-  .vs { color: var(--text-dim); font-size: 11px; margin: 0 4px; }
-  .handicap {
-    display: inline-block;
-    padding: 3px 10px;
-    border-radius: 6px;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-  }
-  .handicap.positive { background: var(--green-dim); color: var(--green); border: 1px solid rgba(45,212,160,0.2); }
-  .handicap.negative { background: var(--red-dim); color: var(--red); border: 1px solid rgba(240,84,79,0.2); }
-  .sp-value { font-family: "SF Mono", "JetBrains Mono", "Fira Code", monospace; font-size: 12px; color: var(--text-dim); }
-
-  /* ─── Match Card ─── */
-  .match-card {
-    background: var(--card);
-    border-radius: 16px;
-    border: 1px solid var(--border);
-    margin-bottom: 20px;
-    overflow: hidden;
-  }
-  .match-card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px 20px;
-    background: linear-gradient(135deg, var(--card-inner), var(--card));
-    border-bottom: 1px solid var(--border);
-  }
-  .match-card-header .match-label {
-    font-weight: 700;
-    font-size: 15px;
-    letter-spacing: 0.3px;
-  }
-  .match-card-header .match-tag {
-    font-size: 11px;
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-  }
-  .tag-crush { background: var(--red-dim); color: var(--red); border: 1px solid rgba(240,84,79,0.25); }
-  .tag-suppress { background: rgba(249,115,22,0.10); color: #f97316; border: 1px solid rgba(249,115,22,0.25); }
-  .tag-advantage { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(232,168,32,0.25); }
-  .tag-close { background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(79,143,247,0.25); }
-  .tag-even { background: var(--purple-dim); color: var(--purple); border: 1px solid rgba(176,110,245,0.25); }
-
-  .match-card-body { padding: 20px; }
-
-  /* ─── Dim Row ─── */
-  .dim-row {
-    padding: 12px 0;
-    border-bottom: 1px solid rgba(37,42,62,0.5);
-  }
-  .dim-row:last-child { border-bottom: none; }
-
-  .analysis-summary {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    padding: 14px 16px;
-    margin-top: 8px;
-    background: linear-gradient(135deg, rgba(232,168,32,0.08), rgba(232,168,32,0.03));
-    border-radius: 10px;
-    border: 1px solid rgba(232,168,32,0.15);
-  }
-  .analysis-summary .summary-icon { font-size: 16px; }
-  .analysis-summary .summary-text {
-    color: #e8e9ed;
-    font-size: 13px;
+    font-family: var(--serif);
+    background: var(--paper);
+    color: var(--ink);
     line-height: 1.6;
-    font-weight: 500;
+    padding: 28px 16px 64px;
+    max-width: 760px;
+    margin: 0 auto;
+    background-image: radial-gradient(rgba(28,26,23,0.025) 1px, transparent 1px);
+    background-size: 3px 3px;
   }
+  .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
 
-  .dim-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 6px;
-  }
-  .dim-label {
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--text-dim);
-    letter-spacing: 0.5px;
-  }
-  .dim-label .weight { font-size: 10px; color: var(--accent); margin-left: 6px; font-weight: 600; }
-  .dim-score {
-    font-weight: 800;
-    font-size: 14px;
-    padding: 2px 10px;
-    border-radius: 6px;
-  }
-  .score-high { color: var(--green); background: var(--green-dim); }
-  .score-mid { color: var(--accent); background: var(--accent-dim); }
-  .score-low { color: var(--red); background: var(--red-dim); }
-  .dim-content {
-    font-size: 13px;
-    color: var(--text);
-    line-height: 1.8;
-  }
+  /* ── 刊头 ── */
+  .masthead { border-top: 3px double var(--ink); border-bottom: 1px solid var(--ink); padding: 14px 0 12px; margin-bottom: 22px; }
+  .masthead .top-row { display:flex; justify-content:space-between; align-items:baseline; margin-bottom: 6px; flex-wrap:wrap; gap:6px; }
+  .masthead .brand { font-family: var(--serif); font-weight: 700; font-size: 20px; letter-spacing: 0.02em; }
+  .masthead .brand .em { color: var(--red); }
+  .masthead .issue { font-family: var(--mono); font-size: 11px; color: var(--ink-dim); letter-spacing:0.08em; }
+  .masthead h1 { font-family: var(--serif); font-weight: 700; font-size: 15px; letter-spacing: 0.02em; }
+  .masthead h1 .mono { font-size: 13px; }
+  .masthead .rule { font-family: var(--mono); font-size: 10px; color: var(--ink-dim); margin-top: 4px; }
 
-  /* ─── 盘口密码 Special Style ─── */
-  .dim-row.is-handicap {
-    background: linear-gradient(135deg, var(--cyan-dim), var(--accent-dim));
-    margin: 4px -12px;
-    padding: 14px 16px;
-    border-radius: 10px;
-    border-bottom: none;
-  }
-  .dim-row.is-handicap .dim-label {
-    color: var(--cyan);
-    font-size: 14px;
-  }
-  .dim-row.is-handicap .dim-content {
-    color: var(--text);
-  }
-  /* 盘口子块 */
-  .hc-block {
-    margin: 6px 0;
-    padding: 8px 12px;
-    background: rgba(10,12,16,0.5);
-    border-radius: 8px;
-    border-left: 3px solid var(--cyan);
-    font-size: 12px;
-    line-height: 1.9;
-  }
-  .hc-block-title {
-    font-weight: 700;
-    color: var(--cyan);
-    font-size: 11px;
-    letter-spacing: 1px;
-    margin-bottom: 3px;
-    text-transform: uppercase;
-  }
-  .hc-block .signal-up { color: var(--green); font-weight: 700; }
-  .hc-block .signal-down { color: var(--red); font-weight: 700; }
-  .hc-block .signal-warn { color: var(--accent); font-weight: 700; }
-  .hc-block .signal-mute { color: var(--text-dim); }
+  /* ── 结论先行 ── */
+  .verdict { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--ink); margin-bottom: 26px; }
+  .verdict > div { padding: 12px 14px; border-right: 1px solid var(--line); text-align: center; }
+  .verdict > div:last-child { border-right: none; }
+  .verdict .v-label { font-family: var(--mono); font-size: 10px; letter-spacing:0.12em; color: var(--ink-dim); text-transform:uppercase; }
+  .verdict .v-sp { font-family: var(--mono); font-weight: 700; font-size: 22px; margin: 2px 0; }
+  .verdict .v-dir { font-family: var(--serif); font-size: 11px; color: var(--ink-dim); }
 
-  /* ─── Footer ─── */
-  .match-card-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 14px 20px;
-    background: linear-gradient(135deg, #0e1018, #141825);
-    border-top: 1px solid var(--border);
-  }
-  .recommendation {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .rec-direction {
-    font-size: 16px;
-    font-weight: 800;
-    color: var(--accent);
-    letter-spacing: 1px;
-  }
-  .rec-sp {
-    font-size: 12px;
-    padding: 3px 10px;
-    background: var(--accent-dim);
-    border: 1px solid rgba(232,168,32,0.2);
-    border-radius: 6px;
-    color: var(--accent);
-    font-weight: 700;
-    font-family: "SF Mono", "JetBrains Mono", monospace;
-  }
-  .total-score {
-    font-size: 22px;
-    font-weight: 900;
-    letter-spacing: -0.5px;
-  }
-  .total-score .score-num { color: var(--accent); }
-  .total-score .score-max { color: var(--text-dim); font-size: 13px; font-weight: 400; }
-  .risk-note {
-    font-size: 12px;
-    color: var(--red);
-    margin-top: 6px;
-    padding-left: 2px;
-  }
+  /* ── 章节标记 ── */
+  .section-head { display:flex; align-items:baseline; gap: 10px; border-bottom: 2px solid var(--ink); padding-bottom: 4px; margin: 28px 0 14px; flex-wrap:wrap; }
+  .section-head .num { font-family: var(--mono); font-weight:700; font-size: 13px; color: var(--paper); background: var(--ink); padding: 1px 7px; letter-spacing: 0.05em; }
+  .section-head .title { font-family: var(--serif); font-weight: 700; font-size: 15px; }
+  .section-head .sub { font-family: var(--mono); font-size: 10px; color: var(--ink-dim); margin-left:auto; }
 
-  /* ─── Parlay Cards ─── */
-  .parlay-card {
-    background: var(--card);
-    border-radius: 16px;
-    border: 1px solid var(--border);
-    padding: 24px;
-    margin-bottom: 16px;
-  }
-  .parlay-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid var(--border);
-  }
-  .parlay-title { font-size: 16px; font-weight: 800; letter-spacing: 0.5px; }
-  .expert-head { display: flex; flex-direction: column; gap: 4px; }
-  .expert-persona {
-    display: inline-block;
-    color: var(--text-dim);
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.8px;
-  }
-  .expert-quote {
-    margin: -4px 0 10px;
-    color: var(--text);
-    font-size: 13px;
-    font-weight: 600;
-    font-style: italic;
-  }
-  .expert-focus {
-    margin-bottom: 14px;
-    padding: 8px 12px;
-    background: var(--card-inner);
-    border-radius: 8px;
-    border: 1px solid var(--border);
-    color: var(--text-dim);
-    font-size: 12px;
-    line-height: 1.7;
-  }
-  .parlay-sp {
-    font-size: 24px;
-    font-weight: 900;
-    color: var(--accent);
-    font-family: "SF Mono", "JetBrains Mono", monospace;
-  }
-  .parlay-sp small { font-size: 11px; color: var(--text-dim); font-weight: 400; letter-spacing: 0; }
-  .parlay-items { margin-bottom: 14px; }
-  .parlay-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 14px;
-    border-radius: 10px;
-    margin-bottom: 5px;
-    font-size: 13px;
-  }
-  .parlay-item .item-match { font-weight: 500; }
-  .parlay-item .item-dir { font-weight: 800; color: var(--accent); }
-  .parlay-item .item-sp { color: var(--text-dim); font-size: 12px; font-family: "SF Mono", "JetBrains Mono", monospace; }
-  .parlay-logic {
-    font-size: 13px;
-    color: var(--text-dim);
-    padding: 12px 14px;
-    background: var(--card-inner);
-    border-radius: 10px;
-    border: 1px solid var(--border);
-    line-height: 1.8;
-  }
-  .confidence { margin-top: 10px; }
-  .confidence .stars { color: var(--accent); letter-spacing: 3px; font-size: 14px; }
+  /* ── 对阵表 ── */
+  table.fixtures { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 12px; }
+  table.fixtures th { text-align: left; font-weight: 600; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-dim); border-bottom: 1px solid var(--ink); padding: 6px 8px; }
+  table.fixtures td { padding: 9px 8px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  table.fixtures tr:last-child td { border-bottom: 1px solid var(--ink); }
+  .fx-id { color: var(--ink-dim); font-size: 11px; }
+  .fx-team { font-family: var(--serif); font-weight: 600; font-size: 13px; }
+  .fx-vs { color: var(--ink-dim); font-size: 10px; }
+  .fx-hc { font-weight: 700; }
+  .fx-hc.neg { color: var(--red); }
+  .fx-sp { font-variant-numeric: tabular-nums; color: var(--ink-dim); }
 
-  .parlay-safe .parlay-item { background: var(--green-dim); border: 1px solid rgba(45,212,160,0.1); }
-  .parlay-safe .parlay-title { color: var(--green); }
-  .parlay-value .parlay-item { background: var(--accent-dim); border: 1px solid rgba(232,168,32,0.1); }
-  .parlay-value .parlay-title { color: var(--accent); }
-  .parlay-dark .parlay-item { background: var(--purple-dim); border: 1px solid rgba(176,110,245,0.1); }
-  .parlay-dark .parlay-title { color: var(--purple); }
+  /* ── 逐场分析 ── */
+  .match { border-bottom: 1px solid var(--line); padding: 18px 0; }
+  .match:last-child { border-bottom: none; }
+  .match-head { display:flex; align-items:baseline; justify-content:space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 4px; }
+  .match-head .m-title { font-family: var(--serif); font-weight: 700; font-size: 15px; }
+  .match-head .m-title .mono { color: var(--ink-dim); font-weight: 400; font-size: 12px; margin-right:6px; }
+  .match-head .m-tag { font-family: var(--mono); font-size: 10px; letter-spacing:0.08em; color: var(--ink); border:1px solid var(--ink); padding: 1px 6px; }
+  .match-tagline { font-family: var(--serif); font-size: 12px; color: var(--ink-dim); margin-bottom: 10px; }
 
-  .footer {
-    text-align: center;
-    padding: 28px 16px;
-    color: var(--text-dim);
-    font-size: 11px;
-    letter-spacing: 0.5px;
-  }
-  .footer .sources { margin-bottom: 4px; }
-  .footer .disclaimer { color: var(--red); font-weight: 600; }
+  .dims { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line); border:1px solid var(--line); margin-bottom: 12px; }
+  .dim { background: var(--paper); padding: 9px 11px; }
+  .dim.is-cipher { background: var(--paper-2); grid-column: 1 / -1; }
+  .dim .d-top { display:flex; justify-content:space-between; align-items:baseline; margin-bottom: 2px; }
+  .dim .d-name { font-family: var(--mono); font-size: 10px; letter-spacing:0.08em; text-transform:uppercase; color: var(--ink); font-weight:600; }
+  .dim .d-name .w { color: var(--ink-dim); font-weight:400; margin-left:5px; }
+  .dim .d-score { font-family: var(--mono); font-weight:700; font-size: 13px; }
+  .dim .d-score .max { color: var(--ink-dim); font-size: 10px; font-weight:400; }
+  .dim .d-desc { font-family: var(--serif); font-size: 12.5px; line-height: 1.55; }
+  .dim.is-cipher .d-desc { line-height: 1.7; }
+  .dim .hc-block { display:block; margin: 5px 0 0; padding-left: 8px; border-left: 2px solid var(--ink-dim); }
+  .dim .hc-block-title { font-family: var(--mono); font-size: 10px; letter-spacing:0.08em; color: var(--ink-dim); text-transform:uppercase; margin-right:4px; }
+  .dim .signal-up { color: var(--green); font-weight:700; }
+  .dim .signal-down { color: var(--red); font-weight:700; }
+  .dim .signal-warn { color: var(--ink-dim); }
 
-  @media (max-width: 600px) {
-    body { padding: 8px; }
-    .match-card-header { flex-direction: column; gap: 8px; }
-    .dim-row { flex-direction: column; gap: 4px; }
-    .dim-label { width: auto; }
-    .dim-score { text-align: left; width: auto; }
+  .match-foot { display:flex; justify-content:space-between; align-items:center; border-top: 1px dashed var(--line); padding-top: 10px; margin-top: 4px; gap:12px; }
+  .rec { display:flex; align-items:baseline; gap: 10px; flex-wrap:wrap; }
+  .rec .r-label { font-family: var(--mono); font-size: 10px; letter-spacing:0.1em; color: var(--ink-dim); text-transform:uppercase; }
+  .rec .r-dir { font-family: var(--serif); font-weight: 700; font-size: 17px; color: var(--red); }
+  .rec .r-sp { font-family: var(--mono); font-size: 12px; color: var(--ink); border:1px solid var(--ink); padding: 1px 6px; }
+  .total { text-align:right; }
+  .total .t-num { font-family: var(--mono); font-weight: 700; font-size: 30px; line-height:1; }
+  .total .t-max { font-family: var(--mono); font-size: 11px; color: var(--ink-dim); }
+  .risk { font-family: var(--serif); font-size: 12px; color: var(--red); margin-top: 8px; }
+
+  /* ── 签名元素：可撕票根 ── */
+  .stubs { display: grid; gap: 22px; }
+  .stub { position: relative; background: var(--paper-2); border: 1px solid var(--ink); }
+  .stub::before, .stub::after { content:''; position:absolute; left:0; right:0; height:6px; background-image: radial-gradient(circle at 6px 50%, var(--paper) 3.5px, transparent 4px); background-size: 12px 6px; background-repeat: repeat-x; }
+  .stub::before { top:-3px; }
+  .stub::after { bottom:-3px; }
+  .stub .tear { border-top: 1px dashed var(--ink); margin: 0; position: relative; }
+  .stub .tear::before, .stub .tear::after { content:''; position:absolute; top:-7px; width:12px; height:12px; border-radius:50%; background: var(--paper); }
+  .stub .tear::before { left:-7px; }
+  .stub .tear::after { right:-7px; }
+  .stub-head { display:flex; justify-content:space-between; align-items:flex-start; padding: 16px 18px 12px; gap:12px; }
+  .stub-head .h-left { display:flex; flex-direction:column; gap:3px; }
+  .stub-head .h-type { font-family: var(--mono); font-size: 10px; letter-spacing:0.18em; color: var(--ink-dim); text-transform:uppercase; }
+  .stub-head .h-expert { font-family: var(--serif); font-weight:700; font-size: 16px; }
+  .stub-head .h-quote { font-family: var(--serif); font-style: italic; font-size: 12px; color: var(--ink-dim); margin-top: 2px; }
+  .stub-head .h-sp-wrap { text-align:right; }
+  .stub-head .h-sp { font-family: var(--mono); font-weight:700; font-size: 26px; line-height:1; }
+  .stub-head .h-sp-cap { font-family: var(--mono); font-size: 9px; letter-spacing:0.12em; color: var(--ink-dim); text-transform:uppercase; }
+  .stub-body { padding: 14px 18px 16px; }
+  .stub-focus { font-family: var(--mono); font-size: 11px; color: var(--ink-dim); margin-bottom: 10px; }
+  .stub-items { font-family: var(--mono); font-size: 12px; border-top:1px solid var(--line); }
+  .stub-item { display:grid; grid-template-columns: 1fr auto auto; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--line); align-items: baseline; }
+  .stub-item .i-match { font-family: var(--serif); font-size: 13px; }
+  .stub-item .i-dir { font-weight:700; color: var(--red); }
+  .stub-item .i-sp { font-variant-numeric: tabular-nums; color: var(--ink-dim); }
+  .stub-logic { font-family: var(--serif); font-size: 12.5px; line-height:1.6; margin: 12px 0 10px; }
+  .stub-conf { display:flex; align-items:center; gap:8px; font-family: var(--mono); font-size: 11px; color: var(--ink-dim); }
+  .conf-box { display:inline-block; width:10px; height:10px; background: var(--ink); }
+  .conf-box.off { background: transparent; border:1px solid var(--line); }
+
+  /* ── 落款 ── */
+  .colophon { margin-top: 30px; border-top: 3px double var(--ink); padding-top: 12px; font-family: var(--mono); font-size: 10px; color: var(--ink-dim); letter-spacing: 0.04em; line-height: 1.8; }
+  .colophon .disc { color: var(--red); }
+
+  @media print {
+    body { padding: 0; max-width:none; background:#fff; background-image:none; }
+    .stub, .match, .verdict { break-inside: avoid; }
   }
+  @media (max-width: 560px) {
+    .verdict { grid-template-columns: 1fr; }
+    .verdict > div { border-right:none; border-bottom:1px solid var(--line); }
+    .verdict > div:last-child { border-bottom:none; }
+    .dims { grid-template-columns: 1fr; }
+    .match-foot { flex-direction: column; align-items: flex-start; gap: 8px; }
+    .total { text-align:left; }
+    table.fixtures { font-size: 11px; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition:none !important; animation:none !important; } }
 </style>
 </head>
 <body>
 
-<div class="header">
-  <div class="logo">⚽</div>
-  <h1>世界杯竞彩【<span>{{play_type}}</span>】{{parlay_num}}串1</h1>
-  <div class="meta">
-    <span>{{date}}</span>
-    <span>·</span>
-    <span>{{play_type}}</span>
-    <span>·</span>
-    <span>{{match_count}}场</span>
+<header class="masthead">
+  <div class="top-row">
+    <span class="brand">竞彩周报 · <span class="em">世界杯专刊</span></span>
+    <span class="issue">№ {{date}} · {{play_type}}</span>
   </div>
-  <div class="divider"></div>
+  <h1>{{parlay_num}} 串 1 复盘 · <span class="mono">{{verdict_sp}}</span></h1>
+  <div class="rule">POWER-6 六维 · 凯利 · 隐含概率{{fetched_at}}</div>
+</header>
+
+<div class="verdict">
+{{verdict}}
 </div>
 
-<div class="section-title">📊 赛事一览</div>
-<table class="match-table">
-  <thead>
-    <tr>
-      <th>编号</th>
-      <th>时间</th>
-      <th>对阵</th>
-      <th>{{handicap_header}}</th>
-      <th>SP（胜/平/负）</th>
-    </tr>
-  </thead>
+<div class="section-head"><span class="num">01</span><span class="title">赛事一览</span><span class="sub">{{match_count}} 场 · {{play_type}}</span></div>
+<table class="fixtures">
+  <thead><tr>{{fixtures_header}}</tr></thead>
   <tbody>
-    {{match_table_rows}}
+{{match_table_rows}}
   </tbody>
 </table>
 
-<div class="section-title">🔍 POWER-6 六维分析</div>
+<div class="section-head"><span class="num">02</span><span class="title">POWER-6 逐场推演</span><span class="sub">六维加权 · /100</span></div>
 
 {{match_cards}}
 
-<div class="section-title">🎯 三专家{{parlay_num}}串1方案</div>
+<div class="section-head"><span class="num">03</span><span class="title">三专家方案</span><span class="sub">可撕票根 · 各成一注</span></div>
 
 {{parlay_cards}}
 
-<div class="footer">
-  <div class="sources">📊 500.com竞彩 | 懂球帝API | 欧赔/亚盘分析页</div>
-  <div class="sources">📋 POWER-6六维模型 · 凯利指数 · 隐含概率</div>
-  <div class="disclaimer">⚠️ 以上分析仅供参考，不构成投注建议</div>
-</div>
+<footer class="colophon">
+  数据来源 — 500.com 竞彩 · 懂球帝 API · 欧赔/亚盘分析页<br>
+  分析框架 — POWER-6 六维模型 · 凯利指数 · 隐含概率{{health_line}}<br>
+  <span class="disc">⚠ 以上分析为解读而非预言，不构成投注建议。量力而行。</span>
+</footer>
 
 </body>
 </html>

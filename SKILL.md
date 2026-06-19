@@ -288,7 +288,7 @@ python3 scripts/generate_report.py --data report_data.json -f html -o worldcup_r
 - `references/squad_search.md` — 阵容数据获取手册（懂球帝API流程、tvly备用方案、评级标准）
 - `references/report_schema.md` — 报告JSON Schema、三专家方案字段、生成流程
 - `references/report_templates.md` — 文本/HTML报告格式规范、三专家方案展示模板
-- `references/report_template.html` — HTML报告页面模板（暗色主题、响应式、卡片布局）
+- `references/report_template.html` — HTML报告页面模板（纸本对阵表+可撕票根样式，单文件自包含，响应式）
 - `scripts/generate_report.py` — HTML报告生成脚本（读模板+填充JSON数据）
 - `references/data_sources.md` — 数据源技术手册（500.com页面结构、curl模板、懂球帝API文档）
 - `scripts/fetch_matches.py` — 赛事数据抓取脚本
