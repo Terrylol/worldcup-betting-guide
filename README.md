@@ -104,13 +104,13 @@ npx skills add Terrylol/worldcup-betting-guide
   <img src="./assets/report-parlay.png" alt="Parlay Preview" width="70%" style="border-radius: 12px; border: 1px solid rgba(255,255,255,0.08);">
 </p>
 
-**三档串关方案：**
+**三专家串关方案：**
 
-| 方案 | 策略 | 适用 |
-|------|------|------|
-| 🎯 稳妥 | 全选高置信度场次主方向 | 求稳，SP 8-25 |
-| 🔥 价值 | 1-2 场选赔率有价值的方向 | 兼顾收益，SP 25-80 |
-| 💎 冷门 | 至少 1 场选冷门方向 | 博高赔，SP 80+ |
+| 方案 | 专家 | 决策风格 |
+|------|------|----------|
+| 🎯 稳妥 | Dr. Karl Vogel · 量化派 | 凯利 / 概率 / 赔率一致性 |
+| 🔥 价值 | Johnny Liu · 盘口派 | 亚盘 / 水位 / 诱盘 / 走盘空间 |
+| 💎 冷门 | Mia Carter · 消息派 | 伤停 / 轮换 / 战意 / 临场变量 |
 
 ---
 
@@ -132,6 +132,8 @@ worldcup-betting-guide/
 ├── references/
 │   ├── analysis_methodology.md       # POWER-6 方法论文档
 │   ├── data_sources.md               # 数据源技术手册
+│   ├── report_schema.md              # 报告 JSON Schema 与生成流程
+│   ├── report_templates.md           # 文本/HTML 输出格式规范
 │   ├── squad_search.md               # 阵容数据获取指南
 │   └── report_template.html          # HTML 报告模板
 └── docs/

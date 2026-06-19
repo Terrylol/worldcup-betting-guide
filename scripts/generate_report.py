@@ -51,6 +51,10 @@ DATA_SCHEMA = """
       "type": "safe",
       "icon": "🎯",
       "title": "稳妥方案",
+      "expert": "Dr. Karl Vogel",
+      "persona": "量化派 · 稳妥方案",
+      "quote": "赔率是唯一的真相。",
+      "focus": "凯利指数、隐含概率、多公司赔率一致性",
       "sp": 22.47,
       "items": [
         {"match": "西班牙 vs 佛得角", "direction": "让球胜", "sp": 1.46}
@@ -69,6 +73,7 @@ DATA_SCHEMA = """
 可选字段：
 - matches[].handicap_display — 自动生成，也可手动指定
 - matches[].risk — 风险提示，为空则不显示
+- parlays[].expert/persona/quote/focus — 三专家方案展示字段；缺省时按 type 自动填充
 """
 
 
@@ -93,6 +98,36 @@ def hc_html_class(hc):
 
 def esc(value):
     return html.escape(str(value), quote=True)
+
+EXPERT_PRESETS = {
+    "safe": {
+        "expert": "Dr. Karl Vogel",
+        "persona": "量化派 · 稳妥方案",
+        "quote": "赔率是唯一的真相。",
+        "focus": "凯利指数、隐含概率、多公司赔率一致性",
+    },
+    "value": {
+        "expert": "Johnny \"The Handicapper\" Liu",
+        "persona": "盘口派 · 价值方案",
+        "quote": "盘口不是数学，是心理学。",
+        "focus": "升降盘、水位异动、诱盘识别、走盘空间",
+    },
+    "dark": {
+        "expert": "Mia Carter",
+        "persona": "消息派 · 冷门方案",
+        "quote": "90 分钟的比赛，胜负在更衣室就决定了。",
+        "focus": "伤停、轮换、战意、赛程暗线、临场变量",
+    },
+}
+
+def expert_meta(parlay):
+    preset = EXPERT_PRESETS.get(parlay.get("type"), {})
+    return {
+        "expert": parlay.get("expert") or preset.get("expert", "专家方案"),
+        "persona": parlay.get("persona") or preset.get("persona", parlay.get("title", "串关方案")),
+        "quote": parlay.get("quote") or preset.get("quote", ""),
+        "focus": parlay.get("focus") or preset.get("focus", ""),
+    }
 
 
 def validate_data(data):
@@ -225,6 +260,7 @@ def render_match_cards(matches):
 def render_parlay_cards(parlays):
     cards = []
     for p in parlays:
+        meta = expert_meta(p)
         items = ""
         for it in p["items"]:
             items += (f'<div class="parlay-item">\n'
@@ -232,17 +268,25 @@ def render_parlay_cards(parlays):
                       f'  <span class="item-dir">{esc(it["direction"])}</span>\n'
                       f'  <span class="item-sp">{it["sp"]:.2f}</span>\n'
                       f'</div>\n')
+        quote = f'<div class="expert-quote">「{esc(meta["quote"])}」</div>' if meta.get("quote") else ""
+        focus = f'<div class="expert-focus">擅长：{esc(meta["focus"])}</div>' if meta.get("focus") else ""
         cards.append(
             f'<div class="parlay-card parlay-{p["type"]}">\n'
             f'  <div class="parlay-header">\n'
-            f'    <span class="parlay-title">{esc(p["icon"])} {esc(p["title"])}</span>\n'
+            f'    <div class="expert-head">\n'
+            f'      <span class="parlay-title">{esc(p["icon"])} {esc(meta["expert"])}</span>\n'
+            f'      <span class="expert-persona">{esc(meta["persona"])}</span>\n'
+            f'    </div>\n'
             f'    <span class="parlay-sp">{p["sp"]:.2f} <small>串关SP</small></span>\n'
             f'  </div>\n'
+            f'  {quote}\n'
+            f'  {focus}\n'
             f'  <div class="parlay-items">\n{items}  </div>\n'
             f'  <div class="parlay-logic">{esc(p["logic"])}</div>\n'
             f'  <div class="confidence">置信度：<span class="stars">{esc(p["stars"])}</span></div>\n'
             f'</div>')
     return "\n\n".join(cards)
+
 
 def generate_html(data, template_path=TEMPLATE_PATH):
     errors = validate_data(data)
@@ -301,9 +345,14 @@ def generate_text(data):
             lines.append(f"  {m['risk']}")
 
     lines.append(f"\n{bar}")
-    lines.append(f"【{data['parlay_num']}串1方案推荐】")
+    lines.append(f"【三专家{data['parlay_num']}串1方案】")
     for p in data["parlays"]:
-        lines.append(f"\n{p['icon']} {p['title']}")
+        meta = expert_meta(p)
+        lines.append(f"\n{p['icon']} {meta['expert']} · {meta['persona']}")
+        if meta.get("quote"):
+            lines.append(f"  「{meta['quote']}」")
+        if meta.get("focus"):
+            lines.append(f"  擅长：{meta['focus']}")
         items_str = " × ".join(f"{it['match']} {it['direction']}" for it in p["items"])
         lines.append(f"  {items_str}")
         lines.append(f"  串关SP：{p['sp']:.2f}")
