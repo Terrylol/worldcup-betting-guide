@@ -126,6 +126,81 @@ def trim_noise(text):
     return result.strip()
 
 
+def extract_odds_tables(html):
+    """按公司提取赔率表（pl_table_data）+ 所属公司名。
+
+    500.com 把每家公司的盘口/赔率装在 <table class="pl_table_data"> 里，
+    公司名在其前方的 <p> 标签中（同属一个公司单元格）。只取这部分可砍掉
+    导航噪音，且公司名与数据成对，便于 LLM 按公司分析（如"澳门凯利/立博
+    返还率"）。
+
+    注意：不能按 <tr> 切分再找表——pl_table_data 表内部本身含 <tr> 行，
+    切分会把表撕碎。这里改为直接定位每个表，再回看其前方最近的公司名 <p>。
+
+    返回 None 表示锚点未命中（网站改版），调用方应回退到全页纯文本。
+    """
+    # 单遍前向扫描：按文档顺序同时匹配 <p> 与赔率表，记住最近见过的公司名 <p>。
+    # 每家公司有「即时盘+初盘」两张表，公司 <p> 在第一张表前；前向扫描让两张表
+    # 都带上同一公司名（两张表之间无 <p>，last_company 不变）。
+    token_re = re.compile(
+        r'<p[^>]*>(.*?)</p>|<table[^>]*class="pl_table_data"[^>]*>(.*?)</table>',
+        re.DOTALL)
+    blocks = []
+    last_company = ''
+    for m in token_re.finditer(html):
+        p_inner, tbl_inner = m.group(1), m.group(2)
+        if p_inner is not None:
+            company = re.sub(r'<[^>]+>', '', p_inner).strip()
+            if company:
+                last_company = company
+        elif tbl_inner is not None:
+            txt = unescape(
+                re.sub(r'[ \t]+', ' ', re.sub(r'<[^>]+>', ' ', tbl_inner))
+            ).strip()
+            if txt:
+                blocks.append(f"[{last_company}] {txt}")
+    if not blocks:
+        return None, 0
+    # 每家公司通常含「即时盘+初盘」两张表，公司数 ≈ 表数 / 2
+    n_companies = len({b.split(']')[0] for b in blocks if b.startswith('[')}) or len(blocks)
+    return '\n'.join(blocks), n_companies
+
+
+def build_data_health(full_texts, pages_fetched, companies=None):
+    """生成数据可用性自检清单。
+
+    把"某维度是否抓到真实数据"做成结构化信号（✓/✗ + 命中依据），供 LLM
+    判定该维度能否填入真实数据。标 ✗ 的维度 LLM 必须写"数据暂缺"并按权重
+    重分配，禁止用方法论的示例数字硬编。
+    """
+    companies = companies or {}
+    shuju = full_texts.get("shuju", "")
+    health = []
+
+    # 数据页可探测的维度
+    if "shuju" in pages_fetched:
+        dim_checks = [
+            ("战力鸿沟/FIFA排名", [r"赛前排名", r"世界排名", r"国际足联"]),
+            ("状态引擎/近期战绩", [r"近10场", r"近6场", r"胜率"]),
+            ("交锋心结/交锋记录", [r"交战", r"交锋", r"历史交锋"]),
+            ("阵容博弈/伤停报道", [r"伤停", r"停赛", r"缺阵", r"伤员"]),
+        ]
+        for dim, kws in dim_checks:
+            hit = next((k for k in kws if re.search(k, shuju)), None)
+            health.append((dim, "✓" if hit else "✗", hit or "未检测到"))
+
+    # 盘口密码维度：由亚盘/欧赔页的公司表数量判定
+    if "yazhi" in pages_fetched:
+        n = companies.get("yazhi", 0)
+        health.append(("盘口密码/亚盘", "✓" if n > 0 else "✗",
+                       f"{n}家公司" if n else "未抓到亚盘表"))
+    if "ouzhi" in pages_fetched:
+        n = companies.get("ouzhi", 0)
+        health.append(("盘口密码/欧赔", "✓" if n > 0 else "✗",
+                       f"{n}家公司" if n else "未抓到欧赔表"))
+    return health
+
+
 def fetch_page(fixtureid, page_type):
     """抓取指定页面类型，返回纯文本"""
     page_urls = {
@@ -166,6 +241,8 @@ def main():
 
     page_names = {"shuju": "数据页", "yazhi": "亚盘页", "ouzhi": "欧赔页"}
     result = {"fixtureid": args.fixtureid}
+    full_texts = {}  # 截断前的完整文本，供自检探测（输出用截断后的）
+    companies = {}   # 各页抓到的公司表数量，供盘口密码维度自检
 
     for page_type in pages_to_fetch:
         print(f"正在抓取{page_names[page_type]}...", file=sys.stderr)
@@ -177,13 +254,29 @@ def main():
 
         if html.startswith("[ERROR]"):
             text = html
+            n_companies = 0
+        elif not args.raw and page_type in ("yazhi", "ouzhi"):
+            # 优先按 pl_table_data 锚点定向提取：砍掉导航噪音、保留公司名
+            extracted, n_companies = extract_odds_tables(html)
+            text = extracted if extracted else trim_noise(html_to_text(html))
+            if not extracted:
+                n_companies = 0
         else:
             text = html_to_text(html)
+            n_companies = 0
             if not args.raw:
                 text = trim_noise(text)
 
         result[f"{page_type}_length"] = len(text)
         result[f"{page_type}_text"] = text[:args.max_chars]
+        result[f"{page_type}_companies"] = n_companies
+        # 自检必须在截断前的完整文本上探测，否则后段关键词漏检导致误报 ✗
+        full_texts[page_type] = text
+        companies[page_type] = n_companies
+
+    # 数据可用性自检：把"某维度有没有真实数据"做成明确的结构化信号，
+    # 避免LLM在空缺维度用方法论的示例数字"合理填补"（硬编）。
+    result["data_health"] = build_data_health(full_texts, pages_to_fetch, companies)
 
     if args.json:
         print(json.dumps(result, ensure_ascii=False, indent=2))
@@ -197,6 +290,14 @@ def main():
                 print(text)
                 if len(text) >= args.max_chars:
                     print(f"\n... [已截断，原文{result.get(f'{page_type}_length', '?')}字符]")
+
+        # 数据可用性自检：标 ✗ 的维度禁止填入示例数字
+        if result.get("data_health"):
+            print(f"\n{'='*60}")
+            print("【数据可用性自检】（✗ 维度须写'数据暂缺'并重分配权重，禁止填示例数字）")
+            print(f"{'='*60}")
+            for dim, flag, detail in result["data_health"]:
+                print(f"  {flag} {dim}：{detail}")
 
 
 if __name__ == "__main__":
