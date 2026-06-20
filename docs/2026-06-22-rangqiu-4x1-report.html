@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⚽ 世界杯竞彩分析报告 | 2026-06-22</title>
+<style>
+  :root {
+    --bg: #0a0c10;
+    --card: #12151e;
+    --card-inner: #181c28;
+    --card-hover: #1e2336;
+    --border: #252a3e;
+    --border-light: #2f3550;
+    --text: #e8e9ed;
+    --text-dim: #6b7194;
+    --accent: #e8a820;
+    --accent-glow: rgba(232,168,32,0.25);
+    --accent-dim: rgba(232,168,32,0.08);
+    --green: #2dd4a0;
+    --green-dim: rgba(45,212,160,0.10);
+    --red: #f0544f;
+    --red-dim: rgba(240,84,79,0.10);
+    --blue: #4f8ff7;
+    --blue-dim: rgba(79,143,247,0.10);
+    --purple: #b06ef5;
+    --purple-dim: rgba(176,110,245,0.10);
+    --cyan: #22d3ee;
+    --cyan-dim: rgba(34,211,238,0.08);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    padding: 20px 16px;
+    max-width: 820px;
+    margin: 0 auto;
+  }
+
+  /* ─── Header ─── */
+  .header {
+    text-align: center;
+    padding: 40px 24px 32px;
+    background: linear-gradient(160deg, #12151e 0%, #1a1f35 50%, #12151e 100%);
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '';
+    position: absolute;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: radial-gradient(ellipse at 30% 20%, rgba(232,168,32,0.06) 0%, transparent 50%);
+    pointer-events: none;
+  }
+  .header .logo { font-size: 32px; margin-bottom: 8px; }
+  .header h1 { font-size: 20px; font-weight: 700; margin-bottom: 12px; letter-spacing: 0.5px; }
+  .header h1 span { color: var(--accent); }
+  .header .meta { color: var(--text-dim); font-size: 13px; letter-spacing: 1px; }
+  .header .meta span { margin: 0 10px; }
+  .header .divider {
+    width: 60px; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    margin: 14px auto 0;
+  }
+
+  /* ─── Section Title ─── */
+  .section-title {
+    font-size: 14px;
+    font-weight: 700;
+    padding: 10px 18px;
+    margin: 28px 0 14px;
+    background: var(--accent-dim);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+    color: var(--accent);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  /* ─── Match Table ─── */
+  .match-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--card);
+    border-radius: 14px;
+    overflow: hidden;
+    font-size: 13px;
+    border: 1px solid var(--border);
+  }
+  .match-table th {
+    background: var(--card-inner);
+    padding: 12px;
+    text-align: center;
+    color: var(--text-dim);
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+  .match-table td {
+    padding: 12px;
+    text-align: center;
+    border-top: 1px solid var(--border);
+  }
+  .match-table tr:hover td { background: var(--card-hover); }
+  .team-name { font-weight: 700; }
+  .vs { color: var(--text-dim); font-size: 11px; margin: 0 4px; }
+  .handicap {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  .handicap.positive { background: var(--green-dim); color: var(--green); border: 1px solid rgba(45,212,160,0.2); }
+  .handicap.negative { background: var(--red-dim); color: var(--red); border: 1px solid rgba(240,84,79,0.2); }
+  .sp-value { font-family: "SF Mono", "JetBrains Mono", "Fira Code", monospace; font-size: 12px; color: var(--text-dim); }
+
+  /* ─── Match Card ─── */
+  .match-card {
+    background: var(--card);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+  .match-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, var(--card-inner), var(--card));
+    border-bottom: 1px solid var(--border);
+  }
+  .match-card-header .match-label {
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 0.3px;
+  }
+  .match-card-header .match-tag {
+    font-size: 11px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  .tag-crush { background: var(--red-dim); color: var(--red); border: 1px solid rgba(240,84,79,0.25); }
+  .tag-suppress { background: rgba(249,115,22,0.10); color: #f97316; border: 1px solid rgba(249,115,22,0.25); }
+  .tag-advantage { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(232,168,32,0.25); }
+  .tag-close { background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(79,143,247,0.25); }
+  .tag-even { background: var(--purple-dim); color: var(--purple); border: 1px solid rgba(176,110,245,0.25); }
+
+  .match-card-body { padding: 20px; }
+
+  /* ─── Dim Row ─── */
+  .dim-row {
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(37,42,62,0.5);
+  }
+  .dim-row:last-child { border-bottom: none; }
+
+  .dim-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+  .dim-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-dim);
+    letter-spacing: 0.5px;
+  }
+  .dim-label .weight { font-size: 10px; color: var(--accent); margin-left: 6px; font-weight: 600; }
+  .dim-score {
+    font-weight: 800;
+    font-size: 14px;
+    padding: 2px 10px;
+    border-radius: 6px;
+  }
+  .score-high { color: var(--green); background: var(--green-dim); }
+  .score-mid { color: var(--accent); background: var(--accent-dim); }
+  .score-low { color: var(--red); background: var(--red-dim); }
+  .dim-content {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.8;
+  }
+
+  /* ─── 盘口密码 Special Style ─── */
+  .dim-row.is-handicap {
+    background: linear-gradient(135deg, var(--cyan-dim), var(--accent-dim));
+    margin: 4px -12px;
+    padding: 14px 16px;
+    border-radius: 10px;
+    border-bottom: none;
+  }
+  .dim-row.is-handicap .dim-label {
+    color: var(--cyan);
+    font-size: 14px;
+  }
+  .dim-row.is-handicap .dim-content {
+    color: var(--text);
+  }
+  /* 盘口子块 */
+  .hc-block {
+    margin: 6px 0;
+    padding: 8px 12px;
+    background: rgba(10,12,16,0.5);
+    border-radius: 8px;
+    border-left: 3px solid var(--cyan);
+    font-size: 12px;
+    line-height: 1.9;
+  }
+  .hc-block-title {
+    font-weight: 700;
+    color: var(--cyan);
+    font-size: 11px;
+    letter-spacing: 1px;
+    margin-bottom: 3px;
+    text-transform: uppercase;
+  }
+  .hc-block .signal-up { color: var(--green); font-weight: 700; }
+  .hc-block .signal-down { color: var(--red); font-weight: 700; }
+  .hc-block .signal-warn { color: var(--accent); font-weight: 700; }
+  .hc-block .signal-mute { color: var(--text-dim); }
+
+  /* ─── Footer ─── */
+  .match-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 20px;
+    background: linear-gradient(135deg, #0e1018, #141825);
+    border-top: 1px solid var(--border);
+  }
+  .recommendation {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .rec-direction {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--accent);
+    letter-spacing: 1px;
+  }
+  .rec-sp {
+    font-size: 12px;
+    padding: 3px 10px;
+    background: var(--accent-dim);
+    border: 1px solid rgba(232,168,32,0.2);
+    border-radius: 6px;
+    color: var(--accent);
+    font-weight: 700;
+    font-family: "SF Mono", "JetBrains Mono", monospace;
+  }
+  .total-score {
+    font-size: 22px;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+  }
+  .total-score .score-num { color: var(--accent); }
+  .total-score .score-max { color: var(--text-dim); font-size: 13px; font-weight: 400; }
+  .risk-note {
+    font-size: 12px;
+    color: var(--red);
+    margin-top: 6px;
+    padding-left: 2px;
+  }
+
+  /* ─── Parlay Cards ─── */
+  .parlay-card {
+    background: var(--card);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    padding: 24px;
+    margin-bottom: 16px;
+  }
+  .parlay-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .parlay-title { font-size: 16px; font-weight: 800; letter-spacing: 0.5px; }
+  .parlay-sp {
+    font-size: 24px;
+    font-weight: 900;
+    color: var(--accent);
+    font-family: "SF Mono", "JetBrains Mono", monospace;
+  }
+  .parlay-sp small { font-size: 11px; color: var(--text-dim); font-weight: 400; letter-spacing: 0; }
+  .parlay-items { margin-bottom: 14px; }
+  .parlay-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    border-radius: 10px;
+    margin-bottom: 5px;
+    font-size: 13px;
+  }
+  .parlay-item .item-match { font-weight: 500; }
+  .parlay-item .item-dir { font-weight: 800; color: var(--accent); }
+  .parlay-item .item-sp { color: var(--text-dim); font-size: 12px; font-family: "SF Mono", "JetBrains Mono", monospace; }
+  .parlay-logic {
+    font-size: 13px;
+    color: var(--text-dim);
+    padding: 12px 14px;
+    background: var(--card-inner);
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    line-height: 1.8;
+  }
+  .confidence { margin-top: 10px; }
+  .confidence .stars { color: var(--accent); letter-spacing: 3px; font-size: 14px; }
+
+  .parlay-safe .parlay-item { background: var(--green-dim); border: 1px solid rgba(45,212,160,0.1); }
+  .parlay-safe .parlay-title { color: var(--green); }
+  .parlay-value .parlay-item { background: var(--accent-dim); border: 1px solid rgba(232,168,32,0.1); }
+  .parlay-value .parlay-title { color: var(--accent); }
+  .parlay-dark .parlay-item { background: var(--purple-dim); border: 1px solid rgba(176,110,245,0.1); }
+  .parlay-dark .parlay-title { color: var(--purple); }
+
+  .footer {
+    text-align: center;
+    padding: 28px 16px;
+    color: var(--text-dim);
+    font-size: 11px;
+    letter-spacing: 0.5px;
+  }
+  .footer .sources { margin-bottom: 4px; }
+  .footer .disclaimer { color: var(--red); font-weight: 600; }
+
+  @media (max-width: 600px) {
+    body { padding: 8px; }
+    .match-card-header { flex-direction: column; gap: 8px; }
+    .dim-row { flex-direction: column; gap: 4px; }
+    .dim-label { width: auto; }
+    .dim-score { text-align: left; width: auto; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">⚽</div>
+  <h1>世界杯竞彩【<span>让球胜平负</span>】4串1</h1>
+  <div class="meta">
+    <span>2026-06-22</span>
+    <span>·</span>
+    <span>让球胜平负</span>
+    <span>·</span>
+    <span>4场</span>
+  </div>
+  <div class="divider"></div>
+</div>
+
+<div class="section-title">📊 赛事一览</div>
+<table class="match-table">
+  <thead>
+    <tr>
+      <th>编号</th>
+      <th>时间</th>
+      <th>对阵</th>
+      <th>让球</th>
+      <th>SP（胜/平/负）</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+  <td>周日037</td>
+  <td>00:00</td>
+  <td><span class="team-name">西班牙</span> <span class="vs">vs</span> <span class="team-name">沙特阿拉伯</span></td>
+  <td><span class="handicap negative">主让2球</span></td>
+  <td><span class="sp-value">1.80 / 4.05 / 3.06</span></td>
+</tr>
+<tr>
+  <td>周日038</td>
+  <td>03:00</td>
+  <td><span class="team-name">比利时</span> <span class="vs">vs</span> <span class="team-name">伊朗</span></td>
+  <td><span class="handicap negative">主让1球</span></td>
+  <td><span class="sp-value">2.04 / 3.50 / 2.83</span></td>
+</tr>
+<tr>
+  <td>周日039</td>
+  <td>06:00</td>
+  <td><span class="team-name">乌拉圭</span> <span class="vs">vs</span> <span class="team-name">佛得角</span></td>
+  <td><span class="handicap negative">主让1球</span></td>
+  <td><span class="sp-value">2.14 / 3.23 / 2.84</span></td>
+</tr>
+<tr>
+  <td>周日040</td>
+  <td>09:00</td>
+  <td><span class="team-name">新西兰</span> <span class="vs">vs</span> <span class="team-name">埃及</span></td>
+  <td><span class="handicap positive">主受让1球</span></td>
+  <td><span class="sp-value">2.30 / 3.40 / 2.50</span></td>
+</tr>
+  </tbody>
+</table>
+
+<div class="section-title">🔍 POWER-6 六维分析</div>
+
+<div class="match-card">
+  <div class="match-card-header">
+    <span class="match-label">周日037 西班牙 vs 沙特阿拉伯</span>
+    <span class="match-tag tag-crush">碾压局</span>
+  </div>
+  <div class="match-card-body">
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">战力鸿沟<span class="weight">×15%</span></span>
+    <span class="dim-score score-high">10/10</span>
+  </div>
+  <div class="dim-content">FIFA排名2 vs 61，差59位S级碾压；西班牙身价12.2亿欧 vs 沙特4068万欧，差30倍。五大联赛20人 vs 0人，绝对实力断层。</div>
+</div>
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">状态引擎<span class="weight">×15%</span></span>
+    <span class="dim-score score-high">8/10</span>
+  </div>
+  <div class="dim-content">西班牙近10场6胜4平0负⚡上升态，进25失4，防守稳固；沙特近10场2胜3平5负📉下滑态，进10失13。首轮西班牙0:0佛得角略显迟缓，沙特1:1乌拉圭爆冷拿分。</div>
+</div>
+<div class="dim-row is-handicap">
+  <div class="dim-header">
+    <span class="dim-label">盘口密码<span class="weight">×35%</span></span>
+    <span class="dim-score score-mid">6/10</span>
+  </div>
+  <div class="dim-content"></div>
+  </div>
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">交锋心结<span class="weight">×10%</span></span>
+    <span class="dim-score score-high">9/10</span>
+  </div>
+  <div class="dim-content">双方近3次交战西班牙3胜0平0负，进9失2，血脉压制。最近2012友谊赛5:0横扫。</div>
+</div>
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">阵容博弈<span class="weight">×15%</span></span>
+    <span class="dim-score score-high">10/10</span>
+  </div>
+  <div class="dim-content">西班牙⭐⭐⭐⭐⭐（12.2亿欧，五大联赛20人，亚马尔+佩德里+罗德里领衔）vs 沙特⭐（4068万欧，五大联赛0人，全本土联赛阵容）。暂无重大伤停报道。</div>
+</div>
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">赛程暗线<span class="weight">×10%</span></span>
+    <span class="dim-score score-mid">7/10</span>
+  </div>
+  <div class="dim-content">H组第2轮，两队首轮均平局，西班牙急于抢分出线。凌晨0点开赛对欧洲球员友好。</div>
+</div>
+  </div>
+  <div class="match-card-footer">
+    <div>
+      <div class="recommendation">
+        <span class="rec-direction">让球胜</span>
+        <span class="rec-sp">SP 1.80</span>
+      </div>
+      <div class="risk-note">⚠️ 西班牙首轮0:0佛得角让2球走盘，深盘赢盘能力存疑；沙特首轮1:1乌拉圭展现韧性，让2球仅赢1球即走盘</div>
+    </div>
+    <div class="total-score">
+      <span class="score-num">74</span><span class="score-max">/100</span>
+    </div>
+  </div>
+</div>
+
+<div class="match-card">
+  <div class="match-card-header">
+    <span class="match-label">周日038 比利时 vs 伊朗</span>
+    <span class="match-tag tag-advantage">优势局</span>
+  </div>
+  <div class="match-card-body">
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">战力鸿沟<span class="weight">×15%</span></span>
+    <span class="dim-score score-mid">7/10</span>
+  </div>
+  <div class="dim-content">FIFA排名9 vs 20，差11位B级优势；比利时身价约6亿欧 vs 伊朗3205万欧。五大联赛比利时约12人 vs 伊朗0人。</div>
+</div>
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">状态引擎<span class="weight">×15%</span></span>
+    <span class="dim-score score-mid">7/10</span>
+  </div>
+  <div class="dim-content">比利时近10场6胜4平0负⚡上升态，进32失7，火力凶猛；伊朗近10场4胜4平2负🔄波动态，进16失7。首轮比利时1:1埃及爆冷，伊朗2:2新西兰。</div>
+</div>
+<div class="dim-row is-handicap">
+  <div class="dim-header">
+    <span class="dim-label">盘口密码<span class="weight">×35%</span></span>
+    <span class="dim-score score-mid">5/10</span>
+  </div>
+  <div class="dim-content"></div>
+  </div>
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">交锋心结<span class="weight">×10%</span></span>
+    <span class="dim-score score-mid">5/10</span>
+  </div>
+  <div class="dim-content">双方暂无交战历史，数据空白。</div>
+</div>
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">阵容博弈<span class="weight">×15%</span></span>
+    <span class="dim-score score-high">8/10</span>
+  </div>
+  <div class="dim-content">比利时⭐⭐⭐⭐（约6亿欧，五大联赛12+人，德布劳内领衔）vs 伊朗⭐（3205万欧，五大联赛0人，塔雷米领衔）。伊朗阵容老化，多名主力30+。</div>
+</div>
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">赛程暗线<span class="weight">×10%</span></span>
+    <span class="dim-score score-mid">6/10</span>
+  </div>
+  <div class="dim-content">G组第2轮，两队首轮均平局。凌晨3点开赛对欧洲球员友好，伊朗体能消耗可能更大。</div>
+</div>
+  </div>
+  <div class="match-card-footer">
+    <div>
+      <div class="recommendation">
+        <span class="rec-direction">让球平</span>
+        <span class="rec-sp">SP 3.50</span>
+      </div>
+      <div class="risk-note">⚠️ 比利时首轮1:1埃及让1球走盘，赢盘能力不足；伊朗防守硬度高，让1球走盘概率大</div>
+    </div>
+    <div class="total-score">
+      <span class="score-num">58</span><span class="score-max">/100</span>
+    </div>
+  </div>
+</div>
+
+<div class="match-card">
+  <div class="match-card-header">
+    <span class="match-label">周日039 乌拉圭 vs 佛得角</span>
+    <span class="match-tag tag-advantage">优势局</span>
+  </div>
+  <div class="match-card-body">
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">战力鸿沟<span class="weight">×15%</span></span>
+    <span class="dim-score score-high">8/10</span>
+  </div>
+  <div class="dim-content">FIFA排名16 vs 67，差51位S级碾压；乌拉圭身价3.5亿欧 vs 佛得角5450万欧。五大联赛6人 vs 0人。</div>
+</div>
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">状态引擎<span class="weight">×15%</span></span>
+    <span class="dim-score score-mid">6/10</span>
+  </div>
+  <div class="dim-content">乌拉圭近10场4胜5平1负🔄波动态，进11失8，平局偏多；佛得角近10场4胜5平1负🔄波动态，进17失9，攻击力不俗。首轮乌拉圭1:1沙特，佛得角0:0西班牙爆冷。</div>
+</div>
+<div class="dim-row is-handicap">
+  <div class="dim-header">
+    <span class="dim-label">盘口密码<span class="weight">×35%</span></span>
+    <span class="dim-score score-mid">5/10</span>
+  </div>
+  <div class="dim-content"></div>
+  </div>
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">交锋心结<span class="weight">×10%</span></span>
+    <span class="dim-score score-mid">5/10</span>
+  </div>
+  <div class="dim-content">双方暂无交战历史，数据空白。</div>
+</div>
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">阵容博弈<span class="weight">×15%</span></span>
+    <span class="dim-score score-mid">7/10</span>
+  </div>
+  <div class="dim-content">乌拉圭⭐⭐⭐⭐（3.5亿欧，五大联赛6人，巴尔韦德+努涅斯+阿劳霍领衔）vs 佛得角⭐（5450万欧，五大联赛0人）。佛得角首轮0:0西班牙展现极强防守组织。</div>
+</div>
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">赛程暗线<span class="weight">×10%</span></span>
+    <span class="dim-score score-mid">6/10</span>
+  </div>
+  <div class="dim-content">H组第2轮，两队首轮均平局。上午6点开赛。佛得角首轮逼平西班牙士气正盛。</div>
+</div>
+  </div>
+  <div class="match-card-footer">
+    <div>
+      <div class="recommendation">
+        <span class="rec-direction">让球平</span>
+        <span class="rec-sp">SP 3.23</span>
+      </div>
+      <div class="risk-note">⚠️ 乌拉圭近10场5场平局，平局率50%；佛得角首轮0:0西班牙防守惊人，让1球走盘概率极高</div>
+    </div>
+    <div class="total-score">
+      <span class="score-num">56</span><span class="score-max">/100</span>
+    </div>
+  </div>
+</div>
+
+<div class="match-card">
+  <div class="match-card-header">
+    <span class="match-label">周日040 新西兰 vs 埃及</span>
+    <span class="match-tag tag-close">胶着局</span>
+  </div>
+  <div class="match-card-body">
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">战力鸿沟<span class="weight">×15%</span></span>
+    <span class="dim-score score-mid">6/10</span>
+  </div>
+  <div class="dim-content">FIFA排名85 vs 29，差56位但新西兰受让1球。埃及身价1.1亿欧 vs 新西兰3435万欧。五大联赛埃及3人（萨拉赫+马尔穆什）vs 新西兰0人。</div>
+</div>
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">状态引擎<span class="weight">×15%</span></span>
+    <span class="dim-score score-mid">6/10</span>
+  </div>
+  <div class="dim-content">新西兰近10场1胜2平7负🥶冰封态，进9失19，防守漏洞大；埃及近10场3胜5平2负🔄波动态，进11失7，防守稳健。首轮新西兰2:2伊朗爆冷，埃及1:1比利时。</div>
+</div>
+<div class="dim-row is-handicap">
+  <div class="dim-header">
+    <span class="dim-label">盘口密码<span class="weight">×35%</span></span>
+    <span class="dim-score score-mid">6/10</span>
+  </div>
+  <div class="dim-content"></div>
+  </div>
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">交锋心结<span class="weight">×10%</span></span>
+    <span class="dim-score score-mid">5/10</span>
+  </div>
+  <div class="dim-content">双方近1次交战新西兰0胜0平1负，2024友谊赛0:1负于埃及。</div>
+</div>
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">阵容博弈<span class="weight">×15%</span></span>
+    <span class="dim-score score-mid">7/10</span>
+  </div>
+  <div class="dim-content">埃及⭐⭐⭐（1.1亿欧，五大联赛3人，萨拉赫+马尔穆什领衔）vs 新西兰⭐（3435万欧，五大联赛0人，克里斯-伍德领衔）。埃及牌面明显占优。</div>
+</div>
+<div class="dim-row">
+  <div class="dim-header">
+    <span class="dim-label">赛程暗线<span class="weight">×10%</span></span>
+    <span class="dim-score score-mid">6/10</span>
+  </div>
+  <div class="dim-content">G组第2轮，两队首轮均平局。上午9点开赛。新西兰首轮2:2伊朗展现攻击力。</div>
+</div>
+  </div>
+  <div class="match-card-footer">
+    <div>
+      <div class="recommendation">
+        <span class="rec-direction">让球负</span>
+        <span class="rec-sp">SP 2.50</span>
+      </div>
+      <div class="risk-note">⚠️ 新西兰首轮2:2伊朗攻击端有亮点；埃及萨拉赫状态未知，让1球下埃及需净胜2球才赢盘</div>
+    </div>
+    <div class="total-score">
+      <span class="score-num">62</span><span class="score-max">/100</span>
+    </div>
+  </div>
+</div>
+
+<div class="section-title">🎯 4串1方案</div>
+
+<div class="parlay-card parlay-safe">
+  <div class="parlay-header">
+    <span class="parlay-title">🎯 稳妥方案</span>
+    <span class="parlay-sp">12.96 <small>串关SP</small></span>
+  </div>
+  <div class="parlay-items">
+<div class="parlay-item">
+  <span class="item-match">西班牙 vs 沙特阿拉伯</span>
+  <span class="item-dir">让球胜</span>
+  <span class="item-sp">1.80</span>
+</div>
+<div class="parlay-item">
+  <span class="item-match">比利时 vs 伊朗</span>
+  <span class="item-dir">让球胜</span>
+  <span class="item-sp">2.04</span>
+</div>
+<div class="parlay-item">
+  <span class="item-match">乌拉圭 vs 佛得角</span>
+  <span class="item-dir">让球胜</span>
+  <span class="item-sp">2.14</span>
+</div>
+<div class="parlay-item">
+  <span class="item-match">新西兰 vs 埃及</span>
+  <span class="item-dir">让球负</span>
+  <span class="item-sp">2.50</span>
+</div>
+  </div>
+  <div class="parlay-logic">四场全选实力占优方向：西班牙S级碾压+比利时主场优势+乌拉圭实力差+埃及牌面碾压。SP 12.96，复式8注中此为锚定方案。</div>
+  <div class="confidence">置信度：<span class="stars">⭐⭐⭐⭐</span></div>
+</div>
+
+<div class="parlay-card parlay-value">
+  <div class="parlay-header">
+    <span class="parlay-title">🔥 价值方案</span>
+    <span class="parlay-sp">40.60 <small>串关SP</small></span>
+  </div>
+  <div class="parlay-items">
+<div class="parlay-item">
+  <span class="item-match">西班牙 vs 沙特阿拉伯</span>
+  <span class="item-dir">让球胜</span>
+  <span class="item-sp">1.80</span>
+</div>
+<div class="parlay-item">
+  <span class="item-match">比利时 vs 伊朗</span>
+  <span class="item-dir">让球平</span>
+  <span class="item-sp">3.50</span>
+</div>
+<div class="parlay-item">
+  <span class="item-match">乌拉圭 vs 佛得角</span>
+  <span class="item-dir">让球平</span>
+  <span class="item-sp">3.23</span>
+</div>
+<div class="parlay-item">
+  <span class="item-match">新西兰 vs 埃及</span>
+  <span class="item-dir">让球负</span>
+  <span class="item-sp">2.50</span>
+</div>
+  </div>
+  <div class="parlay-logic">西班牙锁定让球胜做锚，比利时首轮走盘+伊朗防守硬→让平，乌拉圭近10场50%平局率+佛得角首轮零封西班牙→让平，埃及实力占优选让负。两场让平博走盘价值。</div>
+  <div class="confidence">置信度：<span class="stars">⭐⭐⭐</span></div>
+</div>
+
+<div class="parlay-card parlay-dark">
+  <div class="parlay-header">
+    <span class="parlay-title">💎 冷门方案</span>
+    <span class="parlay-sp">83.81 <small>串关SP</small></span>
+  </div>
+  <div class="parlay-items">
+<div class="parlay-item">
+  <span class="item-match">西班牙 vs 沙特阿拉伯</span>
+  <span class="item-dir">让球平</span>
+  <span class="item-sp">4.05</span>
+</div>
+<div class="parlay-item">
+  <span class="item-match">比利时 vs 伊朗</span>
+  <span class="item-dir">让球平</span>
+  <span class="item-sp">3.50</span>
+</div>
+<div class="parlay-item">
+  <span class="item-match">乌拉圭 vs 佛得角</span>
+  <span class="item-dir">让球平</span>
+  <span class="item-sp">3.23</span>
+</div>
+<div class="parlay-item">
+  <span class="item-match">新西兰 vs 埃及</span>
+  <span class="item-dir">让球负</span>
+  <span class="item-sp">2.50</span>
+</div>
+  </div>
+  <div class="parlay-logic">三场让平博走盘+埃及让负。首轮4场中有3场平局，本届世界杯让球走盘率高。西班牙让2球深盘+比利时让1球+乌拉圭让1球，三场全平博高赔。埃及实力占优选让负保底。</div>
+  <div class="confidence">置信度：<span class="stars">⭐⭐</span></div>
+</div>
+
+<div class="parlay-card parlay-safe">
+  <div class="parlay-header">
+    <span class="parlay-title">🛡️ 复式锚定方案（8注覆盖）</span>
+    <span class="parlay-sp">0.00 <small>串关SP</small></span>
+  </div>
+  <div class="parlay-items">
+<div class="parlay-item">
+  <span class="item-match">西班牙 vs 沙特阿拉伯</span>
+  <span class="item-dir">让球胜</span>
+  <span class="item-sp">1.80</span>
+</div>
+<div class="parlay-item">
+  <span class="item-match">新西兰 vs 埃及</span>
+  <span class="item-dir">让球负</span>
+  <span class="item-sp">2.50</span>
+</div>
+  </div>
+  <div class="parlay-logic">8注复式策略：西班牙让球胜+埃及让球负作为2场锚定（高置信度），比利时和乌拉圭各选2个方向（让胜+让平），4×2×2×1=16注太 多。实际8注：①西胜+比胜+乌胜+埃负 ②西胜+比胜+乌平+埃负 ③西胜+比平+乌胜+埃负 ④西胜+比平+乌平+埃负 ⑤西胜+比胜+乌负+埃负 ⑥西胜+比平+乌负+埃负 ⑦西平+比胜+乌胜+埃负 ⑧西平+比平+乌胜+埃负。覆盖西胜×比胜/平×乌胜/平/负×埃负，加1注西平保险。</div>
+  <div class="confidence">置信度：<span class="stars">⭐⭐⭐⭐</span></div>
+</div>
+
+<div class="footer">
+  <div class="sources">📊 500.com竞彩 | 懂球帝API | 欧赔/亚盘分析页</div>
+  <div class="sources">📋 POWER-6六维模型 · 凯利指数 · 隐含概率</div>
+  <div class="disclaimer">⚠️ 以上分析仅供参考，不构成投注建议</div>
+</div>
+
+</body>
+</html>
